@@ -22,12 +22,12 @@
     #zeta-filter-panel .word-item{display:flex;align-items:center;gap:6px;font-size:12px;background:#f3f3f3;padding:6px;border-radius:6px;margin-bottom:4px;flex-wrap:wrap;}
     #zeta-filter-panel .word-item span{flex:1;min-width:0;word-break:break-all;}
     #zeta-status{font-size:11px;color:#673AB7;margin-top:6px;min-height:14px;}
+    #zw-list{max-height:160px;overflow-y:auto;border:1px solid #eee;border-radius:6px;padding:4px;margin-bottom:10px;}
   `;
   overlay.appendChild(style);
 
   overlay.insertAdjacentHTML('beforeend', `
     <h3>🔧 자동 수정-저장 필터 (원본 치환 / 최신 메세지 전용)</h3>
-    <div id="zw-list"></div>
     <div class="row">
       <input id="zw-banned" placeholder="금지어 입력 (AI가 출력하는 표현)">
       <input id="zw-replace" placeholder="대체어 (여러 개는 쉼표로 구분 → 랜덤 치환, 비워두면 삭제)">
@@ -41,13 +41,14 @@
       </label>
       <button id="zw-add" style="background:#4CAF50;">단어 추가</button>
     </div>
-    <hr>
     <div class="row">
       <button id="zw-save" style="background:#2196F3;">저장하고 자동감시 시작</button>
       <button id="zw-stop" style="background:#e53935;">자동감시 중지</button>
       <button id="zw-close" style="background:#999;">닫기</button>
     </div>
     <p id="zeta-status"></p>
+    <hr>
+    <div id="zw-list"></div>
     <p style="font-size:11px;color:#888;margin-top:6px;">
       ※ <b>가장 최근 메세지 1개만</b> 감시합니다. 새 메세지가 오면 금지어 포함 여부를 검사해서, 있으면 자동으로 <b>수정 버튼 → 텍스트 교체 → 저장 버튼</b>까지 눌러 원본 자체를 바꿈니다.<br>
       ※ 화면에 보이는 게 아니라 서버에 저장된 원본이 바뀌므로 새로고침해도 유지됩니다.<br>
