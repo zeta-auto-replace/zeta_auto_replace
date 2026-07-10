@@ -1,1 +1,404 @@
-javascript:%28function%20%28%29%20%7B%0A%20%20const%20WK%20%3D%20%27zeta_filter_words%27%3B%0A%0A%20%20function%20lw%28%29%20%7B%20try%20%7B%20return%20JSON.parse%28localStorage.getItem%28WK%29%29%20%7C%7C%20%5B%5D%3B%20%7D%20catch%20%28e%29%20%7B%20return%20%5B%5D%3B%20%7D%20%7D%0A%20%20function%20sw%28l%29%20%7B%20localStorage.setItem%28WK%2C%20JSON.stringify%28l%29%29%3B%20%7D%0A%0A%20%20%2F%2F%20----------%20%EC%84%A4%EC%A0%95%20%ED%8C%A8%EB%84%90%20UI%20----------%0A%20%20const%20old%20%3D%20document.getElementById%28%27zeta-filter-panel%27%29%3B%0A%20%20if%20%28old%29%20old.remove%28%29%3B%0A%0A%20%20const%20overlay%20%3D%20document.createElement%28%27div%27%29%3B%0A%20%20overlay.id%20%3D%20%27zeta-filter-panel%27%3B%0A%20%20overlay.style.cssText%20%3D%20%27position%3Afixed%3Btop%3A10px%3Bleft%3A50%25%3Btransform%3AtranslateX%28-50%25%29%3Bwidth%3Amin%2894vw%2C380px%29%3Bmax-height%3A88vh%3Boverflow-y%3Aauto%3Bbackground%3A%23ffffff%3Bcolor%3A%23111111%3Bborder%3A2px%20solid%20%23333%3Bborder-radius%3A12px%3Bpadding%3A14px%3Bz-index%3A2147483647%3Bfont-family%3Asans-serif%3Bbox-shadow%3A0%204px%2024px%20rgba%280%2C0%2C0%2C0.35%29%3Bbox-sizing%3Aborder-box%3B%27%3B%0A%0A%20%20const%20style%20%3D%20document.createElement%28%27style%27%29%3B%0A%20%20style.textContent%20%3D%20%60%0A%20%20%20%20%23zeta-filter-panel%20%2A%7Bbox-sizing%3Aborder-box%3Bcolor%3A%23111%20%21important%3B%7D%0A%20%20%20%20%23zeta-filter-panel%20input%2C%23zeta-filter-panel%20select%7Bbackground%3A%23fff%20%21important%3Bborder%3A1px%20solid%20%23bbb%3Bborder-radius%3A6px%3Bpadding%3A6px%3Bfont-size%3A13px%3Bwidth%3A100%25%3Bmargin-bottom%3A6px%3B%7D%0A%20%20%20%20%23zeta-filter-panel%20button%7Bborder%3Anone%3Bborder-radius%3A6px%3Bpadding%3A8px%3Bfont-size%3A13px%3Bcursor%3Apointer%3Bcolor%3A%23fff%20%21important%3B%7D%0A%20%20%20%20%23zeta-filter-panel%20h3%7Bmargin%3A0%200%208px%200%3Bfont-size%3A15px%3B%7D%0A%20%20%20%20%23zeta-filter-panel%20.row%7Bdisplay%3Aflex%3Bflex-direction%3Acolumn%3Bgap%3A4px%3Bmargin-bottom%3A10px%3B%7D%0A%20%20%20%20%23zeta-filter-panel%20.word-item%7Bdisplay%3Aflex%3Balign-items%3Acenter%3Bgap%3A6px%3Bfont-size%3A12px%3Bbackground%3A%23f3f3f3%3Bpadding%3A6px%3Bborder-radius%3A6px%3Bmargin-bottom%3A4px%3Bflex-wrap%3Awrap%3B%7D%0A%20%20%20%20%23zeta-filter-panel%20.word-item%20span%7Bflex%3A1%3Bmin-width%3A0%3Bword-break%3Abreak-all%3B%7D%0A%20%20%20%20%23zeta-status%7Bfont-size%3A11px%3Bcolor%3A%23673AB7%3Bmargin-top%3A6px%3Bmin-height%3A14px%3B%7D%0A%20%20%60%3B%0A%20%20overlay.appendChild%28style%29%3B%0A%0A%20%20overlay.insertAdjacentHTML%28%27beforeend%27%2C%20%60%0A%20%20%20%20%3Ch3%3E%F0%9F%94%A7%20%EC%9E%90%EB%8F%99%20%EC%88%98%EC%A0%95-%EC%A0%80%EC%9E%A5%20%ED%95%84%ED%84%B0%20%28%EC%9B%90%EB%B3%B8%20%EC%B9%98%ED%99%98%20%2F%20%EC%B5%9C%EC%8B%A0%20%EB%A9%94%EC%84%B8%EC%A7%80%20%EC%A0%84%EC%9A%A9%29%3C%2Fh3%3E%0A%20%20%20%20%3Cdiv%20id%3D%22zw-list%22%3E%3C%2Fdiv%3E%0A%20%20%20%20%3Cdiv%20class%3D%22row%22%3E%0A%20%20%20%20%20%20%3Cinput%20id%3D%22zw-banned%22%20placeholder%3D%22%EA%B8%88%EC%A7%80%EC%96%B4%20%EC%9E%85%EB%A0%A5%20%28AI%EA%B0%80%20%EC%B6%9C%EB%A0%A5%ED%95%98%EB%8A%94%20%ED%91%9C%ED%98%84%29%22%3E%0A%20%20%20%20%20%20%3Cinput%20id%3D%22zw-replace%22%20placeholder%3D%22%EB%8C%80%EC%B2%B4%EC%96%B4%20%28%EB%B9%84%EC%9B%8C%EB%91%90%EB%A9%B4%20%EA%B7%B8%EB%83%A5%20%EC%82%AD%EC%A0%9C%29%22%3E%0A%20%20%20%20%20%20%3Cselect%20id%3D%22zw-mode%22%3E%0A%20%20%20%20%20%20%20%20%3Coption%20value%3D%22replace%22%3E%EB%B0%94%EA%BE%B8%EA%B8%B0%28%EB%8C%80%EC%B2%B4%EC%96%B4%EB%A1%9C%20%EA%B5%90%EC%B2%B4%29%3C%2Foption%3E%0A%20%20%20%20%20%20%20%20%3Coption%20value%3D%22delete%22%3E%EC%82%AD%EC%A0%9C%28%EA%B7%B8%EB%83%A5%20%EC%A7%80%EC%9B%80%29%3C%2Foption%3E%0A%20%20%20%20%20%20%3C%2Fselect%3E%0A%20%20%20%20%20%20%3Clabel%20style%3D%22display%3Aflex%3Balign-items%3Acenter%3Bgap%3A6px%3Bfont-size%3A12px%3Bmargin-bottom%3A6px%3B%22%3E%0A%20%20%20%20%20%20%20%20%3Cinput%20type%3D%22checkbox%22%20id%3D%22zw-wholeword%22%20style%3D%22width%3Aauto%3Bmargin%3A0%3B%22%3E%0A%20%20%20%20%20%20%20%20%EC%95%9E%EB%92%A4%EA%B0%80%20%EA%B3%B5%EB%B0%B1%28%EB%98%90%EB%8A%94%20%EB%AC%B8%EC%9E%A5%20%EC%8B%9C%EC%9E%91%2F%EB%81%9D%29%EC%9D%BC%20%EB%95%8C%EB%A7%8C%20%EC%B9%98%ED%99%98%20%28%EB%8F%85%EB%A6%BD%20%EB%8B%A8%EC%96%B4%EB%A1%9C%20%EC%93%B0%EC%98%80%EC%9D%84%20%EB%95%8C%EB%A7%8C%29%0A%20%20%20%20%20%20%3C%2Flabel%3E%0A%20%20%20%20%20%20%3Cbutton%20id%3D%22zw-add%22%20style%3D%22background%3A%234CAF50%3B%22%3E%EB%8B%A8%EC%96%B4%20%EC%B6%94%EA%B0%80%3C%2Fbutton%3E%0A%20%20%20%20%3C%2Fdiv%3E%0A%20%20%20%20%3Chr%3E%0A%20%20%20%20%3Cdiv%20class%3D%22row%22%3E%0A%20%20%20%20%20%20%3Cbutton%20id%3D%22zw-save%22%20style%3D%22background%3A%232196F3%3B%22%3E%EC%A0%80%EC%9E%A5%ED%95%98%EA%B3%A0%20%EC%9E%90%EB%8F%99%EA%B0%90%EC%8B%9C%20%EC%8B%9C%EC%9E%91%3C%2Fbutton%3E%0A%20%20%20%20%20%20%3Cbutton%20id%3D%22zw-stop%22%20style%3D%22background%3A%23e53935%3B%22%3E%EC%9E%90%EB%8F%99%EA%B0%90%EC%8B%9C%20%EC%A4%91%EC%A7%80%3C%2Fbutton%3E%0A%20%20%20%20%20%20%3Cbutton%20id%3D%22zw-close%22%20style%3D%22background%3A%23999%3B%22%3E%EB%8B%AB%EA%B8%B0%3C%2Fbutton%3E%0A%20%20%20%20%3C%2Fdiv%3E%0A%20%20%20%20%3Cp%20id%3D%22zeta-status%22%3E%3C%2Fp%3E%0A%20%20%20%20%3Cp%20style%3D%22font-size%3A11px%3Bcolor%3A%23888%3Bmargin-top%3A6px%3B%22%3E%0A%20%20%20%20%20%20%E2%80%BB%20%3Cb%3E%EA%B0%80%EC%9E%A5%20%EC%B5%9C%EA%B7%BC%20%EB%A9%94%EC%84%B8%EC%A7%80%201%EA%B0%9C%EB%A7%8C%3C%2Fb%3E%20%EA%B0%90%EC%8B%9C%ED%95%A9%EB%8B%88%EB%8B%A4.%20%EC%83%88%20%EB%A9%94%EC%84%B8%EC%A7%80%EA%B0%80%20%EC%98%A4%EB%A9%B4%20%EA%B8%88%EC%A7%80%EC%96%B4%20%ED%8F%AC%ED%95%A8%20%EC%97%AC%EB%B6%80%EB%A5%BC%20%EA%B2%80%EC%82%AC%ED%95%B4%EC%84%9C%2C%20%EC%9E%88%EC%9C%BC%EB%A9%B4%20%EC%9E%90%EB%8F%99%EC%9C%BC%EB%A1%9C%20%3Cb%3E%EC%88%98%EC%A0%95%20%EB%B2%84%ED%8A%BC%20%E2%86%92%20%ED%85%8D%EC%8A%A4%ED%8A%B8%20%EA%B5%90%EC%B2%B4%20%E2%86%92%20%EC%A0%80%EC%9E%A5%20%EB%B2%84%ED%8A%BC%3C%2Fb%3E%EA%B9%8C%EC%A7%80%20%EB%88%8C%EB%9F%AC%20%EC%9B%90%EB%B3%B8%20%EC%9E%90%EC%B2%B4%EB%A5%BC%20%EB%B0%94%EA%BF%88%EB%8B%88%EB%8B%A4.%3Cbr%3E%0A%20%20%20%20%20%20%E2%80%BB%20%ED%99%94%EB%A9%B4%EC%97%90%20%EB%B3%B4%EC%9D%B4%EB%8A%94%20%EA%B2%8C%20%EC%95%84%EB%8B%88%EB%9D%BC%20%EC%84%9C%EB%B2%84%EC%97%90%20%EC%A0%80%EC%9E%A5%EB%90%9C%20%EC%9B%90%EB%B3%B8%EC%9D%B4%20%EB%B0%94%EB%80%8C%EB%AF%80%EB%A1%9C%20%EC%83%88%EB%A1%9C%EA%B3%A0%EC%B9%A8%ED%95%B4%EB%8F%84%20%EC%9C%A0%EC%A7%80%EB%90%A9%EB%8B%88%EB%8B%A4.%3Cbr%3E%0A%20%20%20%20%20%20%E2%80%BB%20%EC%A1%B0%EC%82%AC%28%EC%9D%80%2F%EB%8A%94%2C%20%EC%9D%B4%2F%EA%B0%80%2C%20%EC%9D%84%2F%EB%A5%BC%2C%20%EA%B3%BC%2F%EC%99%80%2C%20%EB%A1%9C%2F%EC%9C%BC%EB%A1%9C%2C%20%EC%9D%B4%EB%82%98%2F%EB%82%98%2C%20%EC%9D%B4%EB%9E%91%2F%EB%9E%91%2C%20%EC%9D%B4%EB%9D%BC%EB%8F%84%2F%EB%9D%BC%EB%8F%84%2C%20%EC%9D%B4%EB%9D%BC%EC%84%9C%2F%EB%9D%BC%EC%84%9C%29%EB%8A%94%20%EB%8C%80%EC%B2%B4%EC%96%B4%EC%9D%98%20%EB%B0%9B%EC%B9%A8%20%EC%9C%A0%EB%AC%B4%EB%A5%BC%20%EB%B3%B4%EA%B3%A0%20%EC%9E%90%EB%8F%99%20%EB%B3%B4%EC%A0%95%EC%9D%84%20%EC%8B%9C%EB%8F%84%ED%95%A9%EB%8B%88%EB%8B%A4%28%EC%99%84%EB%B2%BD%ED%95%98%EC%A7%80%20%EC%95%8A%EC%9D%84%20%EC%88%98%20%EC%9E%88%EC%96%B4%EC%9A%94%29.%3Cbr%3E%0A%20%20%20%20%20%20%E2%80%BB%20%EB%8B%A4%EB%A7%8C%20UI%20%EA%B5%AC%EC%A1%B0%EA%B0%80%20%EB%B0%94%EB%80%8C%EB%A9%B4%20%EB%8F%99%EC%9E%91%EC%9D%B4%20%EA%B9%A8%EC%A7%88%20%EC%88%98%20%EC%9E%88%EC%96%B4%EC%9A%94.%0A%20%20%20%20%3C%2Fp%3E%0A%20%20%60%29%3B%0A%20%20document.body.appendChild%28overlay%29%3B%0A%0A%20%20let%20words%20%3D%20lw%28%29%3B%0A%0A%20%20function%20renderWords%28%29%20%7B%0A%20%20%20%20const%20d%20%3D%20document.getElementById%28%27zw-list%27%29%3B%0A%20%20%20%20if%20%28words.length%20%3D%3D%3D%200%29%20%7B%20d.innerHTML%20%3D%20%27%3Cp%20style%3D%22font-size%3A12px%3Bcolor%3A%23999%3B%22%3E%EB%93%B1%EB%A1%9D%EB%90%9C%20%EA%B8%88%EC%A7%80%EC%96%B4%EA%B0%80%20%EC%97%86%EC%96%B4%EC%9A%94.%3C%2Fp%3E%27%3B%20return%3B%20%7D%0A%20%20%20%20d.innerHTML%20%3D%20words.map%28%28w%2C%20i%29%20%3D%3E%20%7B%0A%20%20%20%20%20%20const%20modeLabel%20%3D%20w.mode%20%3D%3D%3D%20%27delete%27%20%3F%20%27%F0%9F%97%91%EC%82%AD%EC%A0%9C%27%20%3A%20%28%27%E2%86%92%20%27%20%2B%20%28w.replacement%20%7C%7C%20%27%28%EB%B9%88%EC%B9%B8%29%27%29%29%3B%0A%20%20%20%20%20%20const%20wwLabel%20%3D%20w.wholeWord%20%3F%20%27%20%3Ci%20style%3D%22color%3A%232196F3%3B%22%3E%5B%EB%8F%85%EB%A6%BD%EB%8B%A8%EC%96%B4%EB%A7%8C%5D%3C%2Fi%3E%27%20%3A%20%27%27%3B%0A%20%20%20%20%20%20return%20%60%3Cdiv%20class%3D%22word-item%22%3E%3Cspan%3E%3Cb%3E%24%7Bw.banned%7D%3C%2Fb%3E%20%24%7BmodeLabel%7D%24%7BwwLabel%7D%3C%2Fspan%3E%3Cbutton%20data-i%3D%22%24%7Bi%7D%22%20class%3D%22zw-del%22%20style%3D%22background%3A%23f44336%3Bpadding%3A4px%208px%3B%22%3E%EC%82%AD%EC%A0%9C%3C%2Fbutton%3E%3C%2Fdiv%3E%60%3B%0A%20%20%20%20%7D%29.join%28%27%27%29%3B%0A%20%20%20%20document.querySelectorAll%28%27.zw-del%27%29.forEach%28b%20%3D%3E%20%7B%0A%20%20%20%20%20%20b.onclick%20%3D%20%28%29%20%3D%3E%20%7B%20words.splice%28parseInt%28b.dataset.i%29%2C%201%29%3B%20renderWords%28%29%3B%20%7D%3B%0A%20%20%20%20%7D%29%3B%0A%20%20%7D%0A%20%20renderWords%28%29%3B%0A%0A%20%20document.getElementById%28%27zw-add%27%29.onclick%20%3D%20%28%29%20%3D%3E%20%7B%0A%20%20%20%20const%20banned%20%3D%20document.getElementById%28%27zw-banned%27%29.value.trim%28%29%3B%0A%20%20%20%20const%20replacement%20%3D%20document.getElementById%28%27zw-replace%27%29.value.trim%28%29%3B%0A%20%20%20%20const%20mode%20%3D%20document.getElementById%28%27zw-mode%27%29.value%3B%0A%20%20%20%20const%20wholeWord%20%3D%20document.getElementById%28%27zw-wholeword%27%29.checked%3B%0A%20%20%20%20if%20%28%21banned%29%20%7B%20alert%28%27%EA%B8%88%EC%A7%80%EC%96%B4%EB%A5%BC%20%EC%9E%85%EB%A0%A5%ED%95%B4%EC%A3%BC%EC%84%B8%EC%9A%94.%27%29%3B%20return%3B%20%7D%0A%20%20%20%20words.push%28%7B%20banned%2C%20replacement%2C%20mode%2C%20wholeWord%20%7D%29%3B%0A%20%20%20%20document.getElementById%28%27zw-banned%27%29.value%20%3D%20%27%27%3B%0A%20%20%20%20document.getElementById%28%27zw-replace%27%29.value%20%3D%20%27%27%3B%0A%20%20%20%20document.getElementById%28%27zw-wholeword%27%29.checked%20%3D%20false%3B%0A%20%20%20%20renderWords%28%29%3B%0A%20%20%7D%3B%0A%0A%20%20document.getElementById%28%27zw-close%27%29.onclick%20%3D%20%28%29%20%3D%3E%20overlay.remove%28%29%3B%0A%0A%20%20function%20setStatus%28msg%29%20%7B%0A%20%20%20%20const%20s%20%3D%20document.getElementById%28%27zeta-status%27%29%3B%0A%20%20%20%20if%20%28s%29%20s.textContent%20%3D%20msg%3B%0A%20%20%20%20console.log%28%27%5Bzeta-auto-edit%5D%27%2C%20msg%29%3B%0A%20%20%7D%0A%0A%20%20%2F%2F%20----------%20%ED%95%9C%EA%B8%80%20%EB%B0%9B%EC%B9%A8%20%ED%8C%90%EB%B3%84%20%26%20%EC%A1%B0%EC%82%AC%20%EB%B3%B4%EC%A0%95%20----------%0A%20%20function%20batchimCode%28ch%29%20%7B%0A%20%20%20%20if%20%28%21ch%29%20return%20null%3B%0A%20%20%20%20const%20code%20%3D%20ch.charCodeAt%280%29%20-%200xAC00%3B%0A%20%20%20%20if%20%28code%20%3C%200%20%7C%7C%20code%20%3E%2011171%29%20return%20null%3B%0A%20%20%20%20return%20code%20%25%2028%3B%0A%20%20%7D%0A%20%20function%20hasBatchim%28ch%29%20%7B%0A%20%20%20%20const%20b%20%3D%20batchimCode%28ch%29%3B%0A%20%20%20%20return%20b%20%3D%3D%3D%20null%20%3F%20null%20%3A%20b%20%21%3D%3D%200%3B%0A%20%20%7D%0A%20%20function%20isRieulBatchim%28ch%29%20%7B%0A%20%20%20%20return%20batchimCode%28ch%29%20%3D%3D%3D%208%3B%0A%20%20%7D%0A%0A%20%20const%20PARTICLE_RULES%20%3D%20%5B%0A%20%20%20%20%5B%27%EC%9D%B4%EB%9D%BC%EB%8F%84%27%2C%20%27%EB%9D%BC%EB%8F%84%27%5D%2C%0A%20%20%20%20%5B%27%EC%9D%B4%EB%9D%BC%EC%84%9C%27%2C%20%27%EB%9D%BC%EC%84%9C%27%5D%2C%0A%20%20%20%20%5B%27%EC%9D%B4%EB%9E%91%27%2C%20%27%EB%9E%91%27%5D%2C%0A%20%20%20%20%5B%27%EC%9D%B4%EB%82%98%27%2C%20%27%EB%82%98%27%5D%2C%0A%20%20%20%20%5B%27%EC%9D%80%27%2C%20%27%EB%8A%94%27%5D%2C%0A%20%20%20%20%5B%27%EC%9D%B4%27%2C%20%27%EA%B0%80%27%5D%2C%0A%20%20%20%20%5B%27%EC%9D%84%27%2C%20%27%EB%A5%BC%27%5D%2C%0A%20%20%20%20%5B%27%EA%B3%BC%27%2C%20%27%EC%99%80%27%5D%2C%0A%20%20%20%20%5B%27%EC%95%84%27%2C%20%27%EC%95%BC%27%5D%2C%0A%20%20%5D%3B%0A%0A%20%20function%20fixParticleAt%28fullText%2C%20pos%2C%20hasB%2C%20isRieul%29%20%7B%0A%20%20%20%20if%20%28fullText.startsWith%28%27%EC%9C%BC%EB%A1%9C%27%2C%20pos%29%29%20%7B%0A%20%20%20%20%20%20return%20%28hasB%20%26%26%20%21isRieul%29%20%3F%20null%20%3A%20%7B%20len%3A%202%2C%20text%3A%20%27%EB%A1%9C%27%20%7D%3B%0A%20%20%20%20%7D%0A%20%20%20%20if%20%28fullText.startsWith%28%27%EB%A1%9C%27%2C%20pos%29%29%20%7B%0A%20%20%20%20%20%20if%20%28hasB%20%26%26%20%21isRieul%29%20return%20%7B%20len%3A%201%2C%20text%3A%20%27%EC%9C%BC%EB%A1%9C%27%20%7D%3B%0A%20%20%20%20%20%20return%20null%3B%0A%20%20%20%20%7D%0A%20%20%20%20for%20%28const%20%5BwithB%2C%20noB%5D%20of%20PARTICLE_RULES%29%20%7B%0A%20%20%20%20%20%20if%20%28fullText.startsWith%28withB%2C%20pos%29%29%20%7B%0A%20%20%20%20%20%20%20%20if%20%28%21hasB%29%20return%20%7B%20len%3A%20withB.length%2C%20text%3A%20noB%20%7D%3B%0A%20%20%20%20%20%20%20%20return%20null%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20if%20%28fullText.startsWith%28noB%2C%20pos%29%29%20%7B%0A%20%20%20%20%20%20%20%20if%20%28hasB%29%20return%20%7B%20len%3A%20noB.length%2C%20text%3A%20withB%20%7D%3B%0A%20%20%20%20%20%20%20%20return%20null%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20return%20null%3B%0A%20%20%7D%0A%0A%20%20%2F%2F%20%EB%A7%A4%EC%B9%98%20%EC%9C%84%EC%B9%98%EC%9D%98%20%EC%95%9E%2F%EB%92%A4%EA%B0%80%20%22%EA%B3%B5%EB%B0%B1%EC%9D%B4%EA%B1%B0%EB%82%98%20%EB%AC%B8%EC%9E%90%EC%97%B4%EC%9D%98%20%EC%8B%9C%EC%9E%91%2F%EB%81%9D%22%EC%9D%B8%EC%A7%80%20%ED%99%95%EC%9D%B8.%0A%20%20%2F%2F%20%EC%A6%89%20%EA%B7%B8%20%EB%8B%A8%EC%96%B4%EA%B0%80%20%EB%8B%A4%EB%A5%B8%20%EB%8B%A8%EC%96%B4%EC%9D%98%20%EC%9D%BC%EB%B6%80%EA%B0%80%20%EC%95%84%EB%8B%88%EB%9D%BC%20%EB%8F%85%EB%A6%BD%EC%A0%81%EC%9C%BC%EB%A1%9C%20%EC%93%B0%EC%98%80%EB%8A%94%EC%A7%80%20%ED%8C%90%EB%B3%84.%0A%20%20function%20isWhitespaceBoundary%28ch%29%20%7B%0A%20%20%20%20return%20ch%20%3D%3D%3D%20undefined%20%7C%7C%20%2F%5Cs%2F.test%28ch%29%3B%0A%20%20%7D%0A%0A%20%20function%20applyOneReplacement%28text%2C%20banned%2C%20replacement%2C%20mode%2C%20wholeWord%29%20%7B%0A%20%20%20%20if%20%28%21banned%29%20return%20%7B%20text%2C%20changed%3A%20false%20%7D%3B%0A%20%20%20%20let%20result%20%3D%20%27%27%3B%0A%20%20%20%20let%20idx%20%3D%200%3B%0A%20%20%20%20let%20changed%20%3D%20false%3B%0A%20%20%20%20while%20%28true%29%20%7B%0A%20%20%20%20%20%20const%20found%20%3D%20text.indexOf%28banned%2C%20idx%29%3B%0A%20%20%20%20%20%20if%20%28found%20%3D%3D%3D%20-1%29%20%7B%20result%20%2B%3D%20text.slice%28idx%29%3B%20break%3B%20%7D%0A%0A%20%20%20%20%20%20if%20%28wholeWord%29%20%7B%0A%20%20%20%20%20%20%20%20const%20beforeCh%20%3D%20found%20%3E%200%20%3F%20text%5Bfound%20-%201%5D%20%3A%20undefined%3B%0A%20%20%20%20%20%20%20%20const%20afterCh%20%3D%20text%5Bfound%20%2B%20banned.length%5D%3B%0A%20%20%20%20%20%20%20%20if%20%28%21%28isWhitespaceBoundary%28beforeCh%29%20%26%26%20isWhitespaceBoundary%28afterCh%29%29%29%20%7B%0A%20%20%20%20%20%20%20%20%20%20%2F%2F%20%EB%8F%85%EB%A6%BD%EB%90%9C%20%EB%8B%A8%EC%96%B4%EA%B0%80%20%EC%95%84%EB%8B%98%20%28%EC%95%9E%EC%9D%B4%EB%82%98%20%EB%92%A4%EC%97%90%20%EB%8B%A4%EB%A5%B8%20%EA%B8%80%EC%9E%90%EA%B0%80%20%EB%B6%99%EC%96%B4%EC%9E%88%EC%9D%8C%29%20-%3E%20%EA%B1%B4%EB%84%88%EB%9B%B0%EA%B3%A0%20%EA%B3%84%EC%86%8D%20%EC%B0%BE%EA%B8%B0%0A%20%20%20%20%20%20%20%20%20%20result%20%2B%3D%20text.slice%28idx%2C%20found%20%2B%201%29%3B%0A%20%20%20%20%20%20%20%20%20%20idx%20%3D%20found%20%2B%201%3B%0A%20%20%20%20%20%20%20%20%20%20continue%3B%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%0A%20%20%20%20%20%20changed%20%3D%20true%3B%0A%20%20%20%20%20%20result%20%2B%3D%20text.slice%28idx%2C%20found%29%3B%0A%20%20%20%20%20%20let%20after%20%3D%20found%20%2B%20banned.length%3B%0A%0A%20%20%20%20%20%20if%20%28mode%20%3D%3D%3D%20%27delete%27%20%7C%7C%20%21replacement%29%20%7B%0A%20%20%20%20%20%20%20%20idx%20%3D%20after%3B%0A%20%20%20%20%20%20%20%20continue%3B%0A%20%20%20%20%20%20%7D%0A%0A%20%20%20%20%20%20result%20%2B%3D%20replacement%3B%0A%20%20%20%20%20%20const%20lastCh%20%3D%20replacement%5Breplacement.length%20-%201%5D%3B%0A%20%20%20%20%20%20const%20hb%20%3D%20hasBatchim%28lastCh%29%3B%0A%20%20%20%20%20%20if%20%28hb%20%21%3D%3D%20null%29%20%7B%0A%20%20%20%20%20%20%20%20const%20isRieul%20%3D%20isRieulBatchim%28lastCh%29%3B%0A%20%20%20%20%20%20%20%20const%20fix%20%3D%20fixParticleAt%28text%2C%20after%2C%20hb%2C%20isRieul%29%3B%0A%20%20%20%20%20%20%20%20if%20%28fix%29%20%7B%0A%20%20%20%20%20%20%20%20%20%20result%20%2B%3D%20fix.text%3B%0A%20%20%20%20%20%20%20%20%20%20after%20%2B%3D%20fix.len%3B%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20idx%20%3D%20after%3B%0A%20%20%20%20%7D%0A%20%20%20%20return%20%7B%20text%3A%20result%2C%20changed%20%7D%3B%0A%20%20%7D%0A%0A%20%20function%20localReplace%28text%2C%20wordList%29%20%7B%0A%20%20%20%20let%20r%20%3D%20text%3B%0A%20%20%20%20let%20changed%20%3D%20false%3B%0A%20%20%20%20for%20%28const%20w%20of%20wordList%29%20%7B%0A%20%20%20%20%20%20if%20%28%21w.banned%29%20continue%3B%0A%20%20%20%20%20%20const%20res%20%3D%20applyOneReplacement%28r%2C%20w.banned%2C%20w.mode%20%3D%3D%3D%20%27delete%27%20%3F%20%27%27%20%3A%20%28w.replacement%20%7C%7C%20%27%27%29%2C%20w.mode%2C%20w.wholeWord%29%3B%0A%20%20%20%20%20%20if%20%28res.changed%29%20changed%20%3D%20true%3B%0A%20%20%20%20%20%20r%20%3D%20res.text%3B%0A%20%20%20%20%7D%0A%20%20%20%20return%20%7B%20text%3A%20r%2C%20changed%20%7D%3B%0A%20%20%7D%0A%0A%20%20function%20setNativeValue%28el%2C%20value%29%20%7B%0A%20%20%20%20const%20proto%20%3D%20el.tagName%20%3D%3D%3D%20%27TEXTAREA%27%20%3F%20window.HTMLTextAreaElement.prototype%20%3A%20window.HTMLInputElement.prototype%3B%0A%20%20%20%20const%20setter%20%3D%20Object.getOwnPropertyDescriptor%28proto%2C%20%27value%27%29.set%3B%0A%20%20%20%20setter.call%28el%2C%20value%29%3B%0A%20%20%20%20el.dispatchEvent%28new%20Event%28%27input%27%2C%20%7B%20bubbles%3A%20true%20%7D%29%29%3B%0A%20%20%20%20el.dispatchEvent%28new%20Event%28%27change%27%2C%20%7B%20bubbles%3A%20true%20%7D%29%29%3B%0A%20%20%20%20el.dispatchEvent%28new%20KeyboardEvent%28%27keydown%27%2C%20%7B%20bubbles%3A%20true%20%7D%29%29%3B%0A%20%20%20%20el.dispatchEvent%28new%20KeyboardEvent%28%27keyup%27%2C%20%7B%20bubbles%3A%20true%20%7D%29%29%3B%0A%20%20%7D%0A%0A%20%20function%20waitFor%28fn%2C%20timeout%20%3D%203000%2C%20interval%20%3D%20100%29%20%7B%0A%20%20%20%20return%20new%20Promise%28%28resolve%29%20%3D%3E%20%7B%0A%20%20%20%20%20%20const%20start%20%3D%20Date.now%28%29%3B%0A%20%20%20%20%20%20const%20check%20%3D%20%28%29%20%3D%3E%20%7B%0A%20%20%20%20%20%20%20%20let%20result%3B%0A%20%20%20%20%20%20%20%20try%20%7B%20result%20%3D%20fn%28%29%3B%20%7D%20catch%20%28e%29%20%7B%20result%20%3D%20null%3B%20%7D%0A%20%20%20%20%20%20%20%20if%20%28result%29%20%7B%20resolve%28result%29%3B%20return%3B%20%7D%0A%20%20%20%20%20%20%20%20if%20%28Date.now%28%29%20-%20start%20%3E%20timeout%29%20%7B%20resolve%28null%29%3B%20return%3B%20%7D%0A%20%20%20%20%20%20%20%20setTimeout%28check%2C%20interval%29%3B%0A%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%20%20check%28%29%3B%0A%20%20%20%20%7D%29%3B%0A%20%20%7D%0A%0A%20%20%2F%2F%20----------%20%28%EC%88%98%EC%A0%95%EB%90%9C%20%EB%B6%80%EB%B6%84%29%20%EC%B5%9C%EA%B7%BC%20%EB%A9%94%EC%84%B8%EC%A7%80%20%22%ED%85%8D%EC%8A%A4%ED%8A%B8%20%EB%AF%B8%EB%A6%AC%EB%B3%B4%EA%B8%B0%EC%9A%A9%22%20%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88%20%EC%B0%BE%EA%B8%B0%20----------%0A%20%20%2F%2F%20%EC%88%98%EC%A0%95%20%EB%B2%84%ED%8A%BC%EC%9D%84%20%EA%B8%B0%EC%A4%80%EC%9C%BC%EB%A1%9C%20%EB%B6%80%EB%AA%A8%EB%A5%BC%20%ED%95%9C%20%EC%B9%B8%EC%94%A9%20%EC%98%AC%EB%9D%BC%EA%B0%80%EB%A9%B4%EC%84%9C%2C%20%EA%B7%B8%20%EC%95%88%EC%97%90%20%EC%88%98%EC%A0%95%EB%B2%84%ED%8A%BC%EC%9D%B4%20%22%EC%A0%95%ED%99%95%ED%9E%88%201%EA%B0%9C%22%EB%A7%8C%0A%20%20%2F%2F%20%EC%9E%88%EC%9D%84%20%EB%95%8C%EA%B9%8C%EC%A7%80%EB%A7%8C%20%EC%98%AC%EB%9D%BC%EA%B0%90.%202%EA%B0%9C%20%EC%9D%B4%EC%83%81%EC%9D%B4%20%EC%9E%A1%ED%9E%88%EB%8A%94%20%EC%88%9C%EA%B0%84%20%3D%20%EB%8B%A4%EB%A5%B8%20%EB%A9%94%EC%84%B8%EC%A7%80%EA%B9%8C%EC%A7%80%20%ED%8F%AC%ED%95%A8%EB%90%9C%20%EA%B2%83%EC%9D%B4%EB%AF%80%EB%A1%9C%20%EB%A9%88%EC%B6%A4.%0A%20%20%2F%2F%20%28%EC%98%88%EC%A0%84%20%EB%B2%84%EC%A0%84%EC%9D%80%20%EB%AC%B4%EC%A1%B0%EA%B1%B4%206%EB%8B%A8%EA%B3%84%EB%A5%BC%20%EC%98%AC%EB%9D%BC%EA%B0%80%EC%84%9C%2C%20%EA%B5%AC%EC%A1%B0%EC%97%90%20%EB%94%B0%EB%9D%BC%20%EB%8B%A4%EB%A5%B8%20%EB%A9%94%EC%84%B8%EC%A7%80%2F%EC%9E%85%EB%A0%A5%EC%B0%BD%EA%B9%8C%EC%A7%80%20%EC%84%9E%EC%97%AC%0A%20%20%2F%2F%20%20%22%EA%B8%88%EC%A7%80%EC%96%B4%20%EC%97%86%EB%8A%94%EB%8D%B0%20%EC%88%98%EC%A0%95%EC%B0%BD%20%EC%97%B4%EB%A6%BC%22%20%EB%B2%84%EA%B7%B8%EC%9D%98%20%EC%9B%90%EC%9D%B8%EC%9D%B4%20%EB%90%98%EC%97%88%EC%9D%8C%29%0A%20%20function%20findMessageContainer%28editBtn%29%20%7B%0A%20%20%20%20let%20node%20%3D%20editBtn.parentElement%3B%0A%20%20%20%20let%20best%20%3D%20node%3B%0A%20%20%20%20for%20%28let%20i%20%3D%200%3B%20i%20%3C%2015%20%26%26%20node%20%26%26%20node%20%21%3D%3D%20document.body%3B%20i%2B%2B%29%20%7B%0A%20%20%20%20%20%20const%20cnt%20%3D%20node.querySelectorAll%28%27%5Bdata-testid%3D%22edit-button%22%5D%27%29.length%3B%0A%20%20%20%20%20%20if%20%28cnt%20%3E%201%29%20break%3B%0A%20%20%20%20%20%20best%20%3D%20node%3B%0A%20%20%20%20%20%20node%20%3D%20node.parentElement%3B%0A%20%20%20%20%7D%0A%20%20%20%20return%20best%3B%0A%20%20%7D%0A%0A%20%20function%20getLastMessageContainer%28%29%20%7B%0A%20%20%20%20const%20editButtons%20%3D%20document.querySelectorAll%28%27%5Bdata-testid%3D%22edit-button%22%5D%27%29%3B%0A%20%20%20%20if%20%28editButtons.length%20%3D%3D%3D%200%29%20return%20null%3B%0A%20%20%20%20const%20lastBtn%20%3D%20editButtons%5BeditButtons.length%20-%201%5D%3B%0A%20%20%20%20return%20%7B%20container%3A%20findMessageContainer%28lastBtn%29%2C%20editBtn%3A%20lastBtn%20%7D%3B%0A%20%20%7D%0A%0A%20%20%2F%2F%20----------%20%28%EC%88%98%EC%A0%95%EB%90%9C%20%EB%B6%80%EB%B6%84%29%20%EC%8B%A4%EC%A0%9C%20%EC%88%98%EC%A0%95%EC%B0%BD%EC%9D%98%20textarea%20%2F%20%EC%A0%80%EC%9E%A5%EB%B2%84%ED%8A%BC%20%2F%20%EB%8B%AB%EA%B8%B0%EB%B2%84%ED%8A%BC%20%EC%B0%BE%EA%B8%B0%20----------%0A%20%20%2F%2F%20%EC%98%88%EC%A0%84%20%EB%B2%84%EC%A0%84%EC%9D%80%20%22%EC%88%98%EC%A0%95%EB%B2%84%ED%8A%BC%EC%9D%98%20%EB%B6%80%EB%AA%A8%20%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88%20%EC%95%88%EC%97%90%EC%84%9C%22%20%EC%A0%80%EC%9E%A5%2F%EB%8B%AB%EA%B8%B0%20%EB%B2%84%ED%8A%BC%EC%9D%84%20%EC%B0%BE%EC%95%98%EB%8A%94%EB%8D%B0%2C%0A%20%20%2F%2F%20%EC%8B%A4%EC%A0%9C%20%EC%A0%9C%ED%83%80%20UI%EB%8A%94%20%EC%88%98%EC%A0%95%EC%B0%BD%EC%9D%B4%20%EA%B7%B8%20%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88%20%EB%B0%96%EC%97%90%28%ED%99%94%EB%A9%B4%20%EC%A0%84%EC%B2%B4%20%EA%B8%B0%EC%A4%80%20%EB%8B%A4%EB%A5%B8%20%EC%9C%84%EC%B9%98%EC%97%90%29%20%EB%A0%8C%EB%8D%94%EB%A7%81%EB%90%98%EA%B1%B0%EB%82%98%2C%0A%20%20%2F%2F%20%EC%9D%B4%EB%AF%B8%20DOM%EC%97%90%20%EC%88%A8%EC%96%B4%EC%9E%88%EB%8B%A4%EA%B0%80%20%EB%82%98%ED%83%80%EB%82%98%EB%8A%94%20%EB%B0%A9%EC%8B%9D%EC%9D%B4%EB%9D%BC%20%EC%BB%A8%ED%85%8C%EC%9D%B4%EB%84%88%20%EC%95%88%EC%97%90%EC%84%9C%20%EB%AA%BB%20%EC%B0%BE%EB%8A%94%20%EA%B2%BD%EC%9A%B0%EA%B0%80%20%EB%A7%8E%EC%95%98%EC%9D%8C%0A%20%20%2F%2F%20%28%E2%86%92%20%EB%8C%80%EC%B2%B4%20%EC%95%88%EB%90%A8%20%2F%20%EC%A0%80%EC%9E%A5%EB%B2%84%ED%8A%BC%20%EC%95%88%EB%88%8C%EB%A6%BC%20%2F%20%EC%88%98%EC%A0%95%EC%B0%BD%20%EA%B3%84%EC%86%8D%20%EB%9C%A8%EC%9E%88%EB%8A%94%20%EB%B2%84%EA%B7%B8%EC%9D%98%20%EC%9B%90%EC%9D%B8%29.%0A%20%20%2F%2F%0A%20%20%2F%2F%20%EA%B7%B8%EB%9E%98%EC%84%9C%20%22%EC%88%98%EC%A0%95%20%EB%B2%84%ED%8A%BC%20%EB%88%84%EB%A5%B4%EA%B8%B0%20%EC%A0%84%22%20%EC%83%81%ED%83%9C%EB%A5%BC%20%EC%8A%A4%EB%83%85%EC%83%B7%EC%9C%BC%EB%A1%9C%20%EC%B0%8D%EC%96%B4%EB%91%90%EA%B3%A0%2C%20%EB%88%84%EB%A5%B8%20%EB%92%A4%EC%97%90%0A%20%20%2F%2F%20%22%EC%9D%B4%EC%A0%84%EC%97%94%20%EC%97%86%EC%97%88%EA%B1%B0%EB%82%98%20%EC%95%88%20%EB%B3%B4%EC%98%80%EB%8A%94%EB%8D%B0%2C%20%EC%A7%80%EA%B8%88%EC%9D%80%20%ED%99%94%EB%A9%B4%EC%97%90%20%EB%B3%B4%EC%9D%B4%EB%8A%94%22%20%EC%9A%94%EC%86%8C%EB%A5%BC%20%EB%AC%B8%EC%84%9C%20%EC%A0%84%EC%B2%B4%EC%97%90%EC%84%9C%20%EC%B0%BE%EB%8A%94%0A%20%20%2F%2F%20%EB%B0%A9%EC%8B%9D%EC%9C%BC%EB%A1%9C%20%EB%B0%94%EA%BF%88.%20%EC%9D%B4%EB%9F%AC%EB%A9%B4%20%EC%88%98%EC%A0%95%EC%B0%BD%EC%9D%B4%20%EC%96%B4%EB%94%94%EC%97%90%20%EB%A0%8C%EB%8D%94%EB%A7%81%EB%90%98%EB%93%A0%20%EC%A0%95%ED%99%95%ED%9E%88%20%EC%B0%BE%EC%9D%84%20%EC%88%98%20%EC%9E%88%EC%9D%8C.%0A%20%20function%20snapshotVisibility%28selector%29%20%7B%0A%20%20%20%20const%20map%20%3D%20new%20Map%28%29%3B%0A%20%20%20%20document.querySelectorAll%28selector%29.forEach%28el%20%3D%3E%20%7B%0A%20%20%20%20%20%20map.set%28el%2C%20el.offsetParent%20%21%3D%3D%20null%29%3B%0A%20%20%20%20%7D%29%3B%0A%20%20%20%20return%20map%3B%0A%20%20%7D%0A%0A%20%20function%20findNewlyVisible%28beforeMap%2C%20selector%29%20%7B%0A%20%20%20%20const%20els%20%3D%20document.querySelectorAll%28selector%29%3B%0A%20%20%20%20for%20%28const%20el%20of%20els%29%20%7B%0A%20%20%20%20%20%20if%20%28el.offsetParent%20%3D%3D%3D%20null%29%20continue%3B%20%2F%2F%20%EC%A7%80%EA%B8%88%20%EC%95%88%20%EB%B3%B4%EC%9D%B4%EB%A9%B4%20%ED%9B%84%EB%B3%B4%20%EC%95%84%EB%8B%98%0A%20%20%20%20%20%20const%20wasVisible%20%3D%20beforeMap.get%28el%29%20%3D%3D%3D%20true%3B%0A%20%20%20%20%20%20if%20%28%21wasVisible%29%20return%20el%3B%20%2F%2F%20%EC%83%88%EB%A1%9C%20%EC%83%9D%EA%B2%BC%EA%B1%B0%EB%82%98%2C%20%EC%9B%90%EB%9E%98%20%EC%88%A8%EA%B2%A8%EC%A0%B8%20%EC%9E%88%EC%97%88%EC%9D%8C%0A%20%20%20%20%7D%0A%20%20%20%20return%20null%3B%0A%20%20%7D%0A%0A%20%20%2F%2F%20----------%20%EA%B0%90%EC%A7%80%20%26%20%EC%B2%98%EB%A6%AC%20%28%EA%B0%80%EC%9E%A5%20%EC%B5%9C%EA%B7%BC%20%EB%A9%94%EC%84%B8%EC%A7%80%201%EA%B0%9C%EB%A7%8C%29%20----------%0A%20%20const%20lastProcessed%20%3D%20new%20WeakMap%28%29%3B%0A%20%20let%20busy%20%3D%20false%3B%0A%20%20let%20pending%20%3D%20false%3B%0A%20%20let%20debounceTimer%20%3D%20null%3B%0A%0A%20%20async%20function%20editOneMessage%28container%2C%20editBtn%2C%20snapshotText%29%20%7B%0A%20%20%20%20busy%20%3D%20true%3B%0A%20%20%20%20setStatus%28%27%EA%B8%88%EC%A7%80%EC%96%B4%20%EB%B0%9C%EA%B2%AC%2C%20%EC%9E%90%EB%8F%99%20%EC%88%98%EC%A0%95%20%EC%A4%91...%27%29%3B%0A%0A%20%20%20%20const%20beforeTextareas%20%3D%20snapshotVisibility%28%27textarea%27%29%3B%0A%20%20%20%20const%20beforeSaveBtns%20%3D%20snapshotVisibility%28%27button.bg-primary-400%27%29%3B%0A%20%20%20%20const%20beforeCloseBtns%20%3D%20snapshotVisibility%28%27button.bg-gray-800%27%29%3B%0A%0A%20%20%20%20editBtn.click%28%29%3B%0A%0A%20%20%20%20const%20textarea%20%3D%20await%20waitFor%28%28%29%20%3D%3E%20findNewlyVisible%28beforeTextareas%2C%20%27textarea%27%29%2C%203000%29%3B%0A%20%20%20%20if%20%28%21textarea%29%20%7B%0A%20%20%20%20%20%20setStatus%28%27%EC%88%98%EC%A0%95%EC%B0%BD%EC%9D%84%20%EC%B0%BE%EC%A7%80%20%EB%AA%BB%ED%96%88%EC%96%B4%EC%9A%94.%20%28UI%EA%B0%80%20%EB%B0%94%EB%80%8C%EC%97%88%EC%9D%84%20%EC%88%98%20%EC%9E%88%EC%96%B4%EC%9A%94%29%27%29%3B%0A%20%20%20%20%20%20busy%20%3D%20false%3B%0A%20%20%20%20%20%20return%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20const%20original%20%3D%20textarea.value%3B%0A%20%20%20%20const%20%7B%20text%3A%20replacedText%2C%20changed%3A%20reallyChanged%20%7D%20%3D%20localReplace%28original%2C%20words%29%3B%0A%0A%20%20%20%20if%20%28%21reallyChanged%29%20%7B%0A%20%20%20%20%20%20%2F%2F%20%EC%8B%A4%EC%A0%9C%20%EC%9E%85%EB%A0%A5%EC%B0%BD%20%EB%82%B4%EC%9A%A9%EC%97%94%20%EA%B8%88%EC%A7%80%EC%96%B4%EA%B0%80%20%EC%97%86%EC%97%88%EC%9D%8C%20-%3E%20%EA%B7%B8%EB%83%A5%20%EB%8B%AB%EA%B8%B0%EB%A7%8C%20%ED%95%98%EA%B3%A0%20%EC%A2%85%EB%A3%8C%0A%20%20%20%20%20%20const%20closeBtn%20%3D%20await%20waitFor%28%28%29%20%3D%3E%20findNewlyVisible%28beforeCloseBtns%2C%20%27button.bg-gray-800%27%29%2C%202000%29%3B%0A%20%20%20%20%20%20if%20%28closeBtn%29%20closeBtn.click%28%29%3B%0A%20%20%20%20%20%20lastProcessed.set%28container%2C%20snapshotText%29%3B%0A%20%20%20%20%20%20setStatus%28%27%EA%B8%88%EC%A7%80%EC%96%B4%20%EC%97%86%EC%9D%8C.%20%EA%B0%90%EC%8B%9C%20%EA%B3%84%EC%86%8D%20%EC%A4%91.%27%29%3B%0A%20%20%20%20%20%20busy%20%3D%20false%3B%0A%20%20%20%20%20%20return%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20setNativeValue%28textarea%2C%20replacedText%29%3B%0A%20%20%20%20%2F%2F%20textarea%20%EB%82%B4%EC%9A%A9%EC%9D%B4%20%EA%B8%B8%EC%96%B4%EC%84%9C%20%EC%8A%A4%ED%81%AC%EB%A1%A4%EC%9D%B4%20%EC%83%9D%EA%B2%A8%EB%8F%84%20%EC%A0%80%EC%9E%A5%20%EB%B2%84%ED%8A%BC%20%ED%99%9C%EC%84%B1%ED%99%94%20%EC%A1%B0%EA%B1%B4%28%EA%B0%92%20%EB%B3%80%EA%B2%BD%20%EA%B0%90%EC%A7%80%29%EC%9D%B4%0A%20%20%20%20%2F%2F%20%EA%B1%B8%EB%A6%AC%EB%8F%84%EB%A1%9D%20%EC%82%B4%EC%A7%9D%20%EB%8D%94%20%EA%B8%B0%EB%8B%A4%EB%A0%B8%EB%8B%A4%EA%B0%80%20%EC%A0%80%EC%9E%A5%20%EB%B2%84%ED%8A%BC%EC%9D%84%20%EC%B0%BE%EC%9D%8C%0A%20%20%20%20await%20new%20Promise%28r%20%3D%3E%20setTimeout%28r%2C%20250%29%29%3B%0A%0A%20%20%20%20const%20saveBtn%20%3D%20await%20waitFor%28%28%29%20%3D%3E%20%7B%0A%20%20%20%20%20%20const%20b%20%3D%20findNewlyVisible%28beforeSaveBtns%2C%20%27button.bg-primary-400%27%29%3B%0A%20%20%20%20%20%20return%20%28b%20%26%26%20%21b.disabled%29%20%3F%20b%20%3A%20null%3B%0A%20%20%20%20%7D%2C%204000%2C%20150%29%3B%0A%0A%20%20%20%20if%20%28%21saveBtn%29%20%7B%0A%20%20%20%20%20%20setStatus%28%27%EC%A0%80%EC%9E%A5%20%EB%B2%84%ED%8A%BC%EC%9D%84%20%EC%B0%BE%EC%A7%80%20%EB%AA%BB%ED%96%88%EC%96%B4%EC%9A%94%28%EB%B9%84%ED%99%9C%EC%84%B1%20%EC%83%81%ED%83%9C%EC%9D%BC%20%EC%88%98%20%EC%9E%88%EC%9D%8C%29.%20%EC%88%98%EB%8F%99%EC%9C%BC%EB%A1%9C%20%EC%A0%80%EC%9E%A5%ED%95%B4%EC%A3%BC%EC%84%B8%EC%9A%94.%27%29%3B%0A%20%20%20%20%20%20busy%20%3D%20false%3B%0A%20%20%20%20%20%20return%3B%20%2F%2F%20lastProcessed%EC%97%90%20%EA%B8%B0%EB%A1%9D%20%EC%95%88%20%ED%95%A8%20-%3E%20%EB%8B%A4%EC%9D%8C%20%EA%B8%B0%ED%9A%8C%EC%97%90%20%EC%9E%AC%EC%8B%9C%EB%8F%84%0A%20%20%20%20%7D%0A%0A%20%20%20%20saveBtn.click%28%29%3B%0A%20%20%20%20setStatus%28%27%EB%A9%94%EC%84%B8%EC%A7%80%20%EC%9E%90%EB%8F%99%20%EC%88%98%EC%A0%95%20%EC%99%84%EB%A3%8C%20%E2%9C%85%27%29%3B%0A%20%20%20%20lastProcessed.set%28container%2C%20replacedText%29%3B%0A%20%20%20%20busy%20%3D%20false%3B%0A%20%20%7D%0A%0A%20%20async%20function%20checkLastMessage%28%29%20%7B%0A%20%20%20%20if%20%28busy%29%20%7B%20pending%20%3D%20true%3B%20return%3B%20%7D%0A%0A%20%20%20%20const%20found%20%3D%20getLastMessageContainer%28%29%3B%0A%20%20%20%20if%20%28%21found%29%20return%3B%0A%20%20%20%20const%20%7B%20container%2C%20editBtn%20%7D%20%3D%20found%3B%0A%0A%20%20%20%20const%20currentText%20%3D%20container.innerText%20%7C%7C%20%27%27%3B%0A%20%20%20%20if%20%28lastProcessed.get%28container%29%20%3D%3D%3D%20currentText%29%20return%3B%0A%0A%20%20%20%20const%20preCheck%20%3D%20localReplace%28currentText%2C%20words%29%3B%0A%20%20%20%20if%20%28%21preCheck.changed%29%20%7B%0A%20%20%20%20%20%20lastProcessed.set%28container%2C%20currentText%29%3B%0A%20%20%20%20%20%20return%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20await%20editOneMessage%28container%2C%20editBtn%2C%20currentText%29%3B%0A%0A%20%20%20%20if%20%28pending%29%20%7B%0A%20%20%20%20%20%20pending%20%3D%20false%3B%0A%20%20%20%20%20%20scheduleCheck%28%29%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%0A%20%20function%20scheduleCheck%28%29%20%7B%0A%20%20%20%20if%20%28debounceTimer%29%20clearTimeout%28debounceTimer%29%3B%0A%20%20%20%20debounceTimer%20%3D%20setTimeout%28%28%29%20%3D%3E%20%7B%0A%20%20%20%20%20%20debounceTimer%20%3D%20null%3B%0A%20%20%20%20%20%20checkLastMessage%28%29.catch%28e%20%3D%3E%20%7B%20console.error%28%27%5Bzeta-auto-edit%5D%27%2C%20e%29%3B%20busy%20%3D%20false%3B%20%7D%29%3B%0A%20%20%20%20%7D%2C%20700%29%3B%0A%20%20%7D%0A%0A%20%20let%20mo%20%3D%20null%3B%0A%0A%20%20function%20startWatching%28%29%20%7B%0A%20%20%20%20if%20%28mo%29%20mo.disconnect%28%29%3B%0A%20%20%20%20scheduleCheck%28%29%3B%0A%0A%20%20%20%20mo%20%3D%20new%20MutationObserver%28%28%29%20%3D%3E%20%7B%0A%20%20%20%20%20%20scheduleCheck%28%29%3B%0A%20%20%20%20%7D%29%3B%0A%20%20%20%20mo.observe%28document.body%2C%20%7B%20childList%3A%20true%2C%20subtree%3A%20true%2C%20characterData%3A%20true%20%7D%29%3B%0A%20%20%20%20setStatus%28%27%EC%9E%90%EB%8F%99%EA%B0%90%EC%8B%9C%20%EC%8B%9C%EC%9E%91%EB%90%A8%28%EC%B5%9C%EA%B7%BC%20%EB%A9%94%EC%84%B8%EC%A7%80%EB%A7%8C%29.%20%EB%8B%A8%EC%96%B4%20%27%20%2B%20words.length%20%2B%20%27%EA%B0%9C%20%EB%93%B1%EB%A1%9D%EB%90%A8.%27%29%3B%0A%20%20%7D%0A%0A%20%20function%20stopWatching%28%29%20%7B%0A%20%20%20%20if%20%28mo%29%20mo.disconnect%28%29%3B%0A%20%20%20%20mo%20%3D%20null%3B%0A%20%20%20%20if%20%28debounceTimer%29%20clearTimeout%28debounceTimer%29%3B%0A%20%20%20%20debounceTimer%20%3D%20null%3B%0A%20%20%20%20setStatus%28%27%EC%9E%90%EB%8F%99%EA%B0%90%EC%8B%9C%20%EC%A4%91%EC%A7%80%EB%90%A8.%27%29%3B%0A%20%20%7D%0A%0A%20%20document.getElementById%28%27zw-save%27%29.onclick%20%3D%20%28%29%20%3D%3E%20%7B%0A%20%20%20%20sw%28words%29%3B%0A%20%20%20%20startWatching%28%29%3B%0A%20%20%7D%3B%0A%0A%20%20document.getElementById%28%27zw-stop%27%29.onclick%20%3D%20%28%29%20%3D%3E%20stopWatching%28%29%3B%0A%0A%20%20if%20%28words.length%20%3E%200%29%20%7B%0A%20%20%20%20setStatus%28%27%EC%A0%80%EC%9E%A5%EB%90%9C%20%EB%8B%A8%EC%96%B4%20%27%20%2B%20words.length%20%2B%20%27%EA%B0%9C%20%EB%B6%88%EB%9F%AC%EC%98%B4.%20%22%EC%A0%80%EC%9E%A5%ED%95%98%EA%B3%A0%20%EC%9E%90%EB%8F%99%EA%B0%90%EC%8B%9C%20%EC%8B%9C%EC%9E%91%22%EC%9D%84%20%EB%88%8C%EB%9F%AC%EC%A3%BC%EC%84%B8%EC%9A%94.%27%29%3B%0A%20%20%7D%0A%7D%29%28%29%3B%0A
+(function () {
+  const WK = 'zeta_filter_words';
+
+  function lw() { try { return JSON.parse(localStorage.getItem(WK)) || []; } catch (e) { return []; } }
+  function sw(l) { localStorage.setItem(WK, JSON.stringify(l)); }
+
+  // ---------- 설정 패널 UI ----------
+  const old = document.getElementById('zeta-filter-panel');
+  if (old) old.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'zeta-filter-panel';
+  overlay.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);width:min(94vw,380px);max-height:88vh;overflow-y:auto;background:#ffffff;color:#111111;border:2px solid #333;border-radius:12px;padding:14px;z-index:2147483647;font-family:sans-serif;box-shadow:0 4px 24px rgba(0,0,0,0.35);box-sizing:border-box;';
+
+  const style = document.createElement('style');
+  style.textContent = `
+    #zeta-filter-panel *{box-sizing:border-box;color:#111 !important;}
+    #zeta-filter-panel input,#zeta-filter-panel select{background:#fff !important;border:1px solid #bbb;border-radius:6px;padding:6px;font-size:13px;width:100%;margin-bottom:6px;}
+    #zeta-filter-panel button{border:none;border-radius:6px;padding:8px;font-size:13px;cursor:pointer;color:#fff !important;}
+    #zeta-filter-panel h3{margin:0 0 8px 0;font-size:15px;}
+    #zeta-filter-panel .row{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+    #zeta-filter-panel .word-item{display:flex;align-items:center;gap:6px;font-size:12px;background:#f3f3f3;padding:6px;border-radius:6px;margin-bottom:4px;flex-wrap:wrap;}
+    #zeta-filter-panel .word-item span{flex:1;min-width:0;word-break:break-all;}
+    #zeta-status{font-size:11px;color:#673AB7;margin-top:6px;min-height:14px;}
+  `;
+  overlay.appendChild(style);
+
+  overlay.insertAdjacentHTML('beforeend', `
+    <h3>🔧 자동 수정-저장 필터 (원본 치환 / 최신 메세지 전용)</h3>
+    <div id="zw-list"></div>
+    <div class="row">
+      <input id="zw-banned" placeholder="금지어 입력 (AI가 출력하는 표현)">
+      <input id="zw-replace" placeholder="대체어 (비워두면 그냥 삭제)">
+      <select id="zw-mode">
+        <option value="replace">바꾸기(대체어로 교체)</option>
+        <option value="delete">삭제(그냥 지움)</option>
+      </select>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:6px;">
+        <input type="checkbox" id="zw-wholeword" style="width:auto;margin:0;">
+        앞뒤가 공백(또는 문장 시작/끝)일 때만 치환 (독립 단어로 쓰였을 때만)
+      </label>
+      <button id="zw-add" style="background:#4CAF50;">단어 추가</button>
+    </div>
+    <hr>
+    <div class="row">
+      <button id="zw-save" style="background:#2196F3;">저장하고 자동감시 시작</button>
+      <button id="zw-stop" style="background:#e53935;">자동감시 중지</button>
+      <button id="zw-close" style="background:#999;">닫기</button>
+    </div>
+    <p id="zeta-status"></p>
+    <p style="font-size:11px;color:#888;margin-top:6px;">
+      ※ <b>가장 최근 메세지 1개만</b> 감시합니다. 새 메세지가 오면 금지어 포함 여부를 검사해서, 있으면 자동으로 <b>수정 버튼 → 텍스트 교체 → 저장 버튼</b>까지 눌러 원본 자체를 바꿈니다.<br>
+      ※ 화면에 보이는 게 아니라 서버에 저장된 원본이 바뀌므로 새로고침해도 유지됩니다.<br>
+      ※ 조사(은/는, 이/가, 을/를, 과/와, 로/으로, 이나/나, 이랑/랑, 이라도/라도, 이라서/라서)는 대체어의 받침 유무를 보고 자동 보정을 시도합니다(완벽하지 않을 수 있어요).<br>
+      ※ 다만 UI 구조가 바뀌면 동작이 깨질 수 있어요.
+    </p>
+  `);
+  document.body.appendChild(overlay);
+
+  let words = lw();
+
+  function renderWords() {
+    const d = document.getElementById('zw-list');
+    if (words.length === 0) { d.innerHTML = '<p style="font-size:12px;color:#999;">등록된 금지어가 없어요.</p>'; return; }
+    d.innerHTML = words.map((w, i) => {
+      const modeLabel = w.mode === 'delete' ? '🗑삭제' : ('→ ' + (w.replacement || '(빈칸)'));
+      const wwLabel = w.wholeWord ? ' <i style="color:#2196F3;">[독립단어만]</i>' : '';
+      return `<div class="word-item"><span><b>${w.banned}</b> ${modeLabel}${wwLabel}</span><button data-i="${i}" class="zw-del" style="background:#f44336;padding:4px 8px;">삭제</button></div>`;
+    }).join('');
+    document.querySelectorAll('.zw-del').forEach(b => {
+      b.onclick = () => { words.splice(parseInt(b.dataset.i), 1); renderWords(); };
+    });
+  }
+  renderWords();
+
+  document.getElementById('zw-add').onclick = () => {
+    const banned = document.getElementById('zw-banned').value.trim();
+    const replacement = document.getElementById('zw-replace').value.trim();
+    const mode = document.getElementById('zw-mode').value;
+    const wholeWord = document.getElementById('zw-wholeword').checked;
+    if (!banned) { alert('금지어를 입력해주세요.'); return; }
+    words.push({ banned, replacement, mode, wholeWord });
+    document.getElementById('zw-banned').value = '';
+    document.getElementById('zw-replace').value = '';
+    document.getElementById('zw-wholeword').checked = false;
+    renderWords();
+  };
+
+  document.getElementById('zw-close').onclick = () => overlay.remove();
+
+  function setStatus(msg) {
+    const s = document.getElementById('zeta-status');
+    if (s) s.textContent = msg;
+    console.log('[zeta-auto-edit]', msg);
+  }
+
+  // ---------- 한글 받침 판별 & 조사 보정 ----------
+  function batchimCode(ch) {
+    if (!ch) return null;
+    const code = ch.charCodeAt(0) - 0xAC00;
+    if (code < 0 || code > 11171) return null;
+    return code % 28;
+  }
+  function hasBatchim(ch) {
+    const b = batchimCode(ch);
+    return b === null ? null : b !== 0;
+  }
+  function isRieulBatchim(ch) {
+    return batchimCode(ch) === 8;
+  }
+
+  const PARTICLE_RULES = [
+    ['이라도', '라도'],
+    ['이라서', '라서'],
+    ['이랑', '랑'],
+    ['이나', '나'],
+    ['은', '는'],
+    ['이', '가'],
+    ['을', '를'],
+    ['과', '와'],
+    ['아', '야'],
+  ];
+
+  function fixParticleAt(fullText, pos, hasB, isRieul) {
+    if (fullText.startsWith('으로', pos)) {
+      return (hasB && !isRieul) ? null : { len: 2, text: '로' };
+    }
+    if (fullText.startsWith('로', pos)) {
+      if (hasB && !isRieul) return { len: 1, text: '으로' };
+      return null;
+    }
+    for (const [withB, noB] of PARTICLE_RULES) {
+      if (fullText.startsWith(withB, pos)) {
+        if (!hasB) return { len: withB.length, text: noB };
+        return null;
+      }
+      if (fullText.startsWith(noB, pos)) {
+        if (hasB) return { len: noB.length, text: withB };
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // 매치 위치의 앞/뒤가 "공백이거나 문자열의 시작/끝"인지 확인.
+  // 즉 그 단어가 다른 단어의 일부가 아니라 독립적으로 쓰였는지 판별.
+  function isWhitespaceBoundary(ch) {
+    return ch === undefined || /\s/.test(ch);
+  }
+
+  function applyOneReplacement(text, banned, replacement, mode, wholeWord) {
+    if (!banned) return { text, changed: false };
+    let result = '';
+    let idx = 0;
+    let changed = false;
+    while (true) {
+      const found = text.indexOf(banned, idx);
+      if (found === -1) { result += text.slice(idx); break; }
+
+      if (wholeWord) {
+        const beforeCh = found > 0 ? text[found - 1] : undefined;
+        const afterCh = text[found + banned.length];
+        if (!(isWhitespaceBoundary(beforeCh) && isWhitespaceBoundary(afterCh))) {
+          // 독립된 단어가 아님 (앞이나 뒤에 다른 글자가 붙어있음) -> 건너뛰고 계속 찾기
+          result += text.slice(idx, found + 1);
+          idx = found + 1;
+          continue;
+        }
+      }
+
+      changed = true;
+      result += text.slice(idx, found);
+      let after = found + banned.length;
+
+      if (mode === 'delete' || !replacement) {
+        idx = after;
+        continue;
+      }
+
+      result += replacement;
+      const lastCh = replacement[replacement.length - 1];
+      const hb = hasBatchim(lastCh);
+      if (hb !== null) {
+        const isRieul = isRieulBatchim(lastCh);
+        const fix = fixParticleAt(text, after, hb, isRieul);
+        if (fix) {
+          result += fix.text;
+          after += fix.len;
+        }
+      }
+      idx = after;
+    }
+    return { text: result, changed };
+  }
+
+  function localReplace(text, wordList) {
+    let r = text;
+    let changed = false;
+    for (const w of wordList) {
+      if (!w.banned) continue;
+      const res = applyOneReplacement(r, w.banned, w.mode === 'delete' ? '' : (w.replacement || ''), w.mode, w.wholeWord);
+      if (res.changed) changed = true;
+      r = res.text;
+    }
+    return { text: r, changed };
+  }
+
+  function setNativeValue(el, value) {
+    const proto = el.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+    const setter = Object.getOwnPropertyDescriptor(proto, 'value').set;
+    setter.call(el, value);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true }));
+    el.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+  }
+
+  function waitFor(fn, timeout = 3000, interval = 100) {
+    return new Promise((resolve) => {
+      const start = Date.now();
+      const check = () => {
+        let result;
+        try { result = fn(); } catch (e) { result = null; }
+        if (result) { resolve(result); return; }
+        if (Date.now() - start > timeout) { resolve(null); return; }
+        setTimeout(check, interval);
+      };
+      check();
+    });
+  }
+
+  // ---------- (수정된 부분) 최근 메세지 "텍스트 미리보기용" 컨테이너 찾기 ----------
+  // 수정 버튼을 기준으로 부모를 한 칸씩 올라가면서, 그 안에 수정버튼이 "정확히 1개"만
+  // 있을 때까지만 올라감. 2개 이상이 잡히는 순간 = 다른 메세지까지 포함된 것이므로 멈춤.
+  // (예전 버전은 무조건 6단계를 올라가서, 구조에 따라 다른 메세지/입력창까지 섞여
+  //  "금지어 없는데 수정창 열림" 버그의 원인이 되었음)
+  function findMessageContainer(editBtn) {
+    let node = editBtn.parentElement;
+    let best = node;
+    for (let i = 0; i < 15 && node && node !== document.body; i++) {
+      const cnt = node.querySelectorAll('[data-testid="edit-button"]').length;
+      if (cnt > 1) break;
+      best = node;
+      node = node.parentElement;
+    }
+    return best;
+  }
+
+  function getLastMessageContainer() {
+    const editButtons = document.querySelectorAll('[data-testid="edit-button"]');
+    if (editButtons.length === 0) return null;
+    const lastBtn = editButtons[editButtons.length - 1];
+    return { container: findMessageContainer(lastBtn), editBtn: lastBtn };
+  }
+
+  // ---------- (수정된 부분) 실제 수정창의 textarea / 저장버튼 / 닫기버튼 찾기 ----------
+  // 예전 버전은 "수정버튼의 부모 컨테이너 안에서" 저장/닫기 버튼을 찾았는데,
+  // 실제 제타 UI는 수정창이 그 컨테이너 밖에(화면 전체 기준 다른 위치에) 렌더링되거나,
+  // 이미 DOM에 숨어있다가 나타나는 방식이라 컨테이너 안에서 못 찾는 경우가 많았음
+  // (→ 대체 안됨 / 저장버튼 안눌림 / 수정창 계속 뜨있는 버그의 원인).
+  //
+  // 그래서 "수정 버튼 누르기 전" 상태를 스냅샷으로 찍어두고, 누른 뒤에
+  // "이전엔 없었거나 안 보였는데, 지금은 화면에 보이는" 요소를 문서 전체에서 찾는
+  // 방식으로 바꿈. 이러면 수정창이 어디에 렌더링되든 정확히 찾을 수 있음.
+  function snapshotVisibility(selector) {
+    const map = new Map();
+    document.querySelectorAll(selector).forEach(el => {
+      map.set(el, el.offsetParent !== null);
+    });
+    return map;
+  }
+
+  function findNewlyVisible(beforeMap, selector) {
+    const els = document.querySelectorAll(selector);
+    for (const el of els) {
+      if (el.offsetParent === null) continue; // 지금 안 보이면 후보 아님
+      const wasVisible = beforeMap.get(el) === true;
+      if (!wasVisible) return el; // 새로 생겼거나, 원래 숨겨져 있었음
+    }
+    return null;
+  }
+
+  // ---------- 감지 & 처리 (가장 최근 메세지 1개만) ----------
+  const lastProcessed = new WeakMap();
+  let busy = false;
+  let pending = false;
+  let debounceTimer = null;
+
+  async function editOneMessage(container, editBtn, snapshotText) {
+    busy = true;
+    setStatus('금지어 발견, 자동 수정 중...');
+
+    const beforeTextareas = snapshotVisibility('textarea');
+    const beforeSaveBtns = snapshotVisibility('button.bg-primary-400');
+    const beforeCloseBtns = snapshotVisibility('button.bg-gray-800');
+
+    editBtn.click();
+
+    const textarea = await waitFor(() => findNewlyVisible(beforeTextareas, 'textarea'), 3000);
+    if (!textarea) {
+      setStatus('수정창을 찾지 못했어요. (UI가 바뀌었을 수 있어요)');
+      busy = false;
+      return;
+    }
+
+    const original = textarea.value;
+    const { text: replacedText, changed: reallyChanged } = localReplace(original, words);
+
+    if (!reallyChanged) {
+      // 실제 입력창 내용엔 금지어가 없었음 -> 그냥 닫기만 하고 종료
+      const closeBtn = await waitFor(() => findNewlyVisible(beforeCloseBtns, 'button.bg-gray-800'), 2000);
+      if (closeBtn) closeBtn.click();
+      lastProcessed.set(container, snapshotText);
+      setStatus('금지어 없음. 감시 계속 중.');
+      busy = false;
+      return;
+    }
+
+    setNativeValue(textarea, replacedText);
+    // textarea 내용이 길어서 스크롤이 생겨도 저장 버튼 활성화 조건(값 변경 감지)이
+    // 걸리도록 살짝 더 기다렸다가 저장 버튼을 찾음
+    await new Promise(r => setTimeout(r, 250));
+
+    const saveBtn = await waitFor(() => {
+      const b = findNewlyVisible(beforeSaveBtns, 'button.bg-primary-400');
+      return (b && !b.disabled) ? b : null;
+    }, 4000, 150);
+
+    if (!saveBtn) {
+      setStatus('저장 버튼을 찾지 못했어요(비활성 상태일 수 있음). 수동으로 저장해주세요.');
+      busy = false;
+      return; // lastProcessed에 기록 안 함 -> 다음 기회에 재시도
+    }
+
+    saveBtn.click();
+    setStatus('메세지 자동 수정 완료 ✅');
+    lastProcessed.set(container, replacedText);
+    busy = false;
+  }
+
+  async function checkLastMessage() {
+    if (busy) { pending = true; return; }
+
+    const found = getLastMessageContainer();
+    if (!found) return;
+    const { container, editBtn } = found;
+
+    const currentText = container.innerText || '';
+    if (lastProcessed.get(container) === currentText) return;
+
+    const preCheck = localReplace(currentText, words);
+    if (!preCheck.changed) {
+      lastProcessed.set(container, currentText);
+      return;
+    }
+
+    await editOneMessage(container, editBtn, currentText);
+
+    if (pending) {
+      pending = false;
+      scheduleCheck();
+    }
+  }
+
+  function scheduleCheck() {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      debounceTimer = null;
+      checkLastMessage().catch(e => { console.error('[zeta-auto-edit]', e); busy = false; });
+    }, 700);
+  }
+
+  let mo = null;
+
+  function startWatching() {
+    if (mo) mo.disconnect();
+    scheduleCheck();
+
+    mo = new MutationObserver(() => {
+      scheduleCheck();
+    });
+    mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+    setStatus('자동감시 시작됨(최근 메세지만). 단어 ' + words.length + '개 등록됨.');
+  }
+
+  function stopWatching() {
+    if (mo) mo.disconnect();
+    mo = null;
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = null;
+    setStatus('자동감시 중지됨.');
+  }
+
+  document.getElementById('zw-save').onclick = () => {
+    sw(words);
+    startWatching();
+  };
+
+  document.getElementById('zw-stop').onclick = () => stopWatching();
+
+  if (words.length > 0) {
+    setStatus('저장된 단어 ' + words.length + '개 불러옴. "저장하고 자동감시 시작"을 눌러주세요.');
+  }
+})();
