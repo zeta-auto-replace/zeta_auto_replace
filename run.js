@@ -30,7 +30,7 @@
     <div id="zw-list"></div>
     <div class="row">
       <input id="zw-banned" placeholder="금지어 입력 (AI가 출력하는 표현)">
-      <input id="zw-replace" placeholder="대체어 (비워두면 그냥 삭제)">
+      <input id="zw-replace" placeholder="대체어 (여러 개는 쉼표로 구분 → 랜덤 치환, 비워두면 삭제)">
       <select id="zw-mode">
         <option value="replace">바꾸기(대체어로 교체)</option>
         <option value="delete">삭제(그냥 지움)</option>
@@ -63,7 +63,10 @@
     const d = document.getElementById('zw-list');
     if (words.length === 0) { d.innerHTML = '<p style="font-size:12px;color:#999;">등록된 금지어가 없어요.</p>'; return; }
     d.innerHTML = words.map((w, i) => {
-      const modeLabel = w.mode === 'delete' ? '🗑삭제' : ('→ ' + (w.replacement || '(빈칸)'));
+      const replList = (w.replacement || '').split(',').map(s => s.trim()).filter(Boolean);
+      const modeLabel = w.mode === 'delete' ? '🗑삭제'
+        : replList.length > 1 ? ('→ [랜덤] ' + replList.join(' / '))
+        : ('→ ' + (replList[0] || '(빈칸)'));
       const wwLabel = w.wholeWord ? ' <i style="color:#2196F3;">[독립단어만]</i>' : '';
       return `<div class="word-item"><span><b>${w.banned}</b> ${modeLabel}${wwLabel}</span><button data-i="${i}" class="zw-del" style="background:#f44336;padding:4px 8px;">삭제</button></div>`;
     }).join('');
@@ -148,7 +151,11 @@
     return ch === undefined || /\s/.test(ch);
   }
 
-  function applyOneReplacement(text, banned, replacement, mode, wholeWord) {
+  function pickRandom(list) {
+    return list[Math.floor(Math.random() * list.length)];
+  }
+
+  function applyOneReplacement(text, banned, replacementList, mode, wholeWord) {
     if (!banned) return { text, changed: false };
     let result = '';
     let idx = 0;
@@ -172,11 +179,13 @@
       result += text.slice(idx, found);
       let after = found + banned.length;
 
-      if (mode === 'delete' || !replacement) {
+      if (mode === 'delete' || !replacementList || replacementList.length === 0) {
         idx = after;
         continue;
       }
 
+      // 대체어가 여러 개면 매 등장마다 랜덤으로 하나 선택
+      const replacement = pickRandom(replacementList);
       result += replacement;
       const lastCh = replacement[replacement.length - 1];
       const hb = hasBatchim(lastCh);
@@ -198,7 +207,8 @@
     let changed = false;
     for (const w of wordList) {
       if (!w.banned) continue;
-      const res = applyOneReplacement(r, w.banned, w.mode === 'delete' ? '' : (w.replacement || ''), w.mode, w.wholeWord);
+      const replList = w.mode === 'delete' ? [] : (w.replacement || '').split(',').map(s => s.trim()).filter(Boolean);
+      const res = applyOneReplacement(r, w.banned, replList, w.mode, w.wholeWord);
       if (res.changed) changed = true;
       r = res.text;
     }
