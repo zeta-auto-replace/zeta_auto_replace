@@ -42,7 +42,7 @@
       <button id="zw-add" style="background:#4CAF50;">단어 추가</button>
     </div>
     <div class="row">
-      <button id="zw-save" style="background:#2196F3;">저장하고 자동감시 시작</button>
+      <button id="zw-save" style="background:#2196F3;">✅저장하고 자동감시 시작</button>
       <button id="zw-stop" style="background:#e53935;">자동감시 중지</button>
       <button id="zw-close" style="background:#999;">닫기</button>
     </div>
@@ -50,7 +50,7 @@
     <hr>
     <div id="zw-list"></div>
     <p style="font-size:11px;color:#888;margin-top:6px;">
-      ※ <b>가장 최근 메세지 1개만</b> 감시합니다. 새 메세지가 오면 금지어 포함 여부를 검사해서, 있으면 자동으로 <b>수정 버튼 → 텍스트 교체 → 저장 버튼</b>까지 눌러 원본 자체를 바꿈니다.<br>
+      ※ <b>가장 최근 메세지 1개만</b> 감시합니다. 새 메세지가 오면 금지어 포함 여부를 검사해서, 있으면 자동으로 <b>수정 버튼 → 텍스트 교체 → 저장 버튼</b>까지 눌러 원본 자체를 바꿉니다.<br>
       ※ 화면에 보이는 게 아니라 서버에 저장된 원본이 바뀌므로 새로고침해도 유지됩니다.<br>
       ※ 조사(은/는, 이/가, 을/를, 과/와, 로/으로, 이나/나, 이랑/랑, 이라도/라도, 이라서/라서)는 대체어의 받침 유무를 보고 자동 보정을 시도합니다(완벽하지 않을 수 있어요).<br>
       ※ 다만 UI 구조가 바뀌면 동작이 깨질 수 있어요.
