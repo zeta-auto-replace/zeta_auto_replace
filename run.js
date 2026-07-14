@@ -427,19 +427,9 @@
     }
 
     // textarea 엘리먼트는 생겼어도 리액트가 실제 값을 채우는 데 약간
-    // 시간이 걸릴 수 있어서, 값 길이가 더 이상 안 변할 때까지 잠깐 대기
-    await waitFor(() => {
-      const lens = textareas.map(t => t.value.length);
-      const stable = lens.every(l => l > 0) || lens.some(l => l > 0);
-      return stable ? true : null;
-    }, 1500, 100);
-    let prevLens = textareas.map(t => t.value.length);
-    for (let s = 0; s < 5; s++) {
-      await new Promise(r => setTimeout(r, 150));
-      const curLens = textareas.map(t => t.value.length);
-      if (curLens.every((l, idx) => l === prevLens[idx])) break; // 더 이상 안 변함 -> 안정됨
-      prevLens = curLens;
-    }
+    // 시간이 걸릴 수 있어서, 값이 채워질 때까지만 짧게 기다림 (최대 800ms)
+    await waitFor(() => textareas.some(t => t.value.length > 0) ? true : null, 800, 80);
+    await new Promise(r => setTimeout(r, 120));
 
     // 수정창(textarea) 원본에는 마크다운 특수문자 앞에 백슬래시 이스케이프(\#, \*, \_ 등)가
     // 붙어있어서 화면에 보이는 텍스트랑 글자가 달라짐 -> 이스케이프를 제거한 뒤 비교/치환
