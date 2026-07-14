@@ -282,16 +282,25 @@
 
   // ---------- 최근 메세지 컨테이너 찾기 ----------
   function findMessageContainer(editBtn) {
+    // 수정 버튼에서 위로 올라가면서 각 단계의 텍스트 길이를 추적하다가,
+    // "갑자기 확 늘어나는 지점" 바로 직전에서 멈춘다.
+    // (그 지점부터는 스크롤 영역 전체라 다른 메시지들까지 섞이기 시작하는 지점이기 때문)
     let node = editBtn.parentElement;
-    for (let i = 0; i < 25 && node && node !== document.body; i++) {
-      const text = (node.innerText || '').trim();
-      // 이 사이트는 수정 버튼을 화면에 딱 1개만 렌더링해서 "버튼 2개 이상"
-      // 조건으로는 절대 못 멈추므로, 대신 "메시지 하나 분량의 텍스트가
-      // 모였다" 시점에서 멈춘다.
-      if (text.length > 20) return node;
+    let prevNode = node;
+    let prevLen = (node.innerText || '').trim().length;
+    node = node.parentElement;
+    let i = 0;
+    while (node && node !== document.body && i < 25) {
+      const len = (node.innerText || '').trim().length;
+      if (prevLen > 50 && len > prevLen * 1.3 + 20) {
+        return prevNode; // 여기서부터 다른 메시지가 섞이기 시작함 -> 그 직전 단계가 이 메시지의 경계
+      }
+      prevNode = node;
+      prevLen = len;
       node = node.parentElement;
+      i++;
     }
-    return node || editBtn.parentElement;
+    return prevNode;
   }
 
   function getLastMessageContainer() {
