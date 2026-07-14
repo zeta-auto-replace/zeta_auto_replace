@@ -1,14 +1,3 @@
-// ==UserScript==
-// @name         Zeta 자동 금지어 수정-저장 필터
-// @namespace    zeta-auto-filter
-// @version      1.1
-// @description  제타 채팅에서 가장 최근 메시지만 감시해서 금지어를 자동으로 수정-저장합니다.
-// @match        https://zeta-ai.io/*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=zeta-ai.io
-// @grant        none
-// @run-at       document-idle
-// ==/UserScript==
-
 (function () {
   const WK = 'zeta_filter_words';
 
@@ -383,20 +372,19 @@
 
     robustClick(editBtn);
 
-    const textarea = await waitFor(() => {
+    // 정보상자(infobox)처럼 본문과 별도의 textarea가 있는 경우도 있어서,
+    // 컨테이너 안의 textarea를 "전부" 찾아서 각각 검사한다.
+    const textareas = await waitFor(() => {
       // 1) 가장 정확한 방법: 메시지 컨테이너 "안에서" 찾기
-      const inContainer = container.querySelector('textarea');
-      if (inContainer && inContainer.offsetParent !== null) return inContainer;
+      const inContainer = Array.from(container.querySelectorAll('textarea')).filter(t => t.offsetParent !== null);
+      if (inContainer.length > 0) return inContainer;
       // 2) 혹시 수정창이 컨테이너 밖(포탈 등)에 렌더링되는 경우 대비:
-      //    원래 없었는데 새로 생긴 textarea를 찾음 (하단 채팅 입력창은 원래부터 있었으므로 제외됨)
-      const areas = document.querySelectorAll('textarea');
-      for (const t of areas) {
-        if (t.offsetParent !== null && !beforeTextareas.has(t)) return t;
-      }
-      return null;
+      //    원래 없었는데 새로 생긴 textarea들을 찾음 (하단 채팅 입력창은 원래부터 있었으므로 제외됨)
+      const globalNew = Array.from(document.querySelectorAll('textarea')).filter(t => t.offsetParent !== null && !beforeTextareas.has(t));
+      return globalNew.length > 0 ? globalNew : null;
     }, 3000);
 
-    if (!textarea) {
+    if (!textareas) {
       setStatus('수정창을 찾지 못했어요. (UI가 바뀌었을 수 있어요)');
       busy = false;
       return;
@@ -404,10 +392,18 @@
 
     // 수정창(textarea) 원본에는 마크다운 특수문자 앞에 백슬래시 이스케이프(\#, \*, \_ 등)가
     // 붙어있어서 화면에 보이는 텍스트랑 글자가 달라짐 -> 이스케이프를 제거한 뒤 비교/치환
-    const original = stripMarkdownEscapes(textarea.value);
-    const { text: replacedText, changed: reallyChanged } = localReplace(original, words);
+    let anyChanged = false;
+    for (const ta of textareas) {
+      const original = stripMarkdownEscapes(ta.value);
+      const { text: replacedText, changed: reallyChanged } = localReplace(original, words);
+      if (reallyChanged) {
+        setNativeValue(ta, replacedText);
+        anyChanged = true;
+        await new Promise(r => setTimeout(r, 150));
+      }
+    }
 
-    if (!reallyChanged) {
+    if (!anyChanged) {
       const saveBtnNow = findSaveButton();
       const cancelBtn = findCancelButtonNear(saveBtnNow);
       if (cancelBtn) robustClick(cancelBtn);
@@ -417,8 +413,7 @@
       return;
     }
 
-    setNativeValue(textarea, replacedText);
-    await new Promise(r => setTimeout(r, 250));
+    await new Promise(r => setTimeout(r, 200));
 
     const saveBtn = await waitFor(() => {
       const b = findSaveButton();
@@ -433,7 +428,7 @@
 
     robustClick(saveBtn);
     setStatus('메세지 자동 수정 완료 ✅');
-    lastProcessed.set(container, replacedText);
+    lastProcessed.delete(container); // 저장 후 다음 검사 때 최신 화면 텍스트 기준으로 새로 비교
     busy = false;
   }
 
