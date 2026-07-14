@@ -251,6 +251,16 @@
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
     const base = { bubbles: true, cancelable: true, composed: true, view: window, clientX: cx, clientY: cy };
+
+    // 모바일(터치) 대응: touchstart/touchend도 함께 발생시킴
+    try {
+      if (window.Touch && window.TouchEvent) {
+        const touch = new Touch({ identifier: Date.now(), target: el, clientX: cx, clientY: cy });
+        el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, cancelable: true, touches: [touch], targetTouches: [touch], changedTouches: [touch] }));
+        el.dispatchEvent(new TouchEvent('touchend', { bubbles: true, cancelable: true, touches: [], targetTouches: [], changedTouches: [touch] }));
+      }
+    } catch (e) {}
+
     try { el.dispatchEvent(new PointerEvent('pointerdown', { ...base, pointerId: 1, isPrimary: true })); } catch (e) {}
     el.dispatchEvent(new MouseEvent('mousedown', base));
     try { el.dispatchEvent(new PointerEvent('pointerup', { ...base, pointerId: 1, isPrimary: true })); } catch (e) {}
@@ -357,13 +367,25 @@
     busy = true;
     setStatus('금지어 발견, 자동 수정 중...');
 
-    const beforeButtons = snapshotVisibleButtons();
+    // 원래 화면에 이미 떠있던 textarea들(예: 하단 채팅 입력창)을 미리 기록해둠 ->
+    // 나중에 "새로 나타난" textarea만 골라서 잘못된 입력창을 건드리지 않게 함
+    const beforeTextareas = new Set();
+    document.querySelectorAll('textarea').forEach(t => {
+      if (t.offsetParent !== null) beforeTextareas.add(t);
+    });
 
     robustClick(editBtn);
 
     const textarea = await waitFor(() => {
+      // 1) 가장 정확한 방법: 메시지 컨테이너 "안에서" 찾기
+      const inContainer = container.querySelector('textarea');
+      if (inContainer && inContainer.offsetParent !== null) return inContainer;
+      // 2) 혹시 수정창이 컨테이너 밖(포탈 등)에 렌더링되는 경우 대비:
+      //    원래 없었는데 새로 생긴 textarea를 찾음 (하단 채팅 입력창은 원래부터 있었으므로 제외됨)
       const areas = document.querySelectorAll('textarea');
-      for (const t of areas) { if (t.offsetParent !== null) return t; }
+      for (const t of areas) {
+        if (t.offsetParent !== null && !beforeTextareas.has(t)) return t;
+      }
       return null;
     }, 3000);
 
