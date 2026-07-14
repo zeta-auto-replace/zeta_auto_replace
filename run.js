@@ -270,6 +270,13 @@
     if (typeof el.click === 'function') el.click();
   }
 
+  // 마크다운 이스케이프 제거: 수정창 원본 텍스트는 #, *, _ 등 특수문자 앞에
+  // 백슬래시가 붙어있어 화면에 보이는 텍스트와 글자가 어긋남. 이를 제거해서
+  // 감지할 때 봤던 텍스트와 최대한 같은 형태로 맞춰준다.
+  function stripMarkdownEscapes(text) {
+    return (text || '').replace(/\\([\\`*_{}\[\]()#+.!>~|-])/g, '$1');
+  }
+
   function waitFor(fn, timeout = 3000, interval = 100) {
     return new Promise((resolve) => {
       const start = Date.now();
@@ -395,7 +402,9 @@
       return;
     }
 
-    const original = textarea.value;
+    // 수정창(textarea) 원본에는 마크다운 특수문자 앞에 백슬래시 이스케이프(\#, \*, \_ 등)가
+    // 붙어있어서 화면에 보이는 텍스트랑 글자가 달라짐 -> 이스케이프를 제거한 뒤 비교/치환
+    const original = stripMarkdownEscapes(textarea.value);
     const { text: replacedText, changed: reallyChanged } = localReplace(original, words);
 
     if (!reallyChanged) {
