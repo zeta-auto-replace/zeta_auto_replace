@@ -1,15 +1,3 @@
-// ==UserScript==
-// @name         Zeta 자동 금지어 수정-저장 필터
-// @namespace    zeta-auto-filter
-// @version      1.4
-// @description  제타 채팅에서 가장 최근 메시지만 감시해서 금지어를 자동으로 수정-저장합니다.
-// @match        https://zeta-ai.io/*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=zeta-ai.io
-// @grant        none
-// @run-at       document-idle
-// ==/UserScript==
-
-
 (function () {
   const WK = 'zeta_filter_words';
 
@@ -441,7 +429,7 @@
     // textarea 엘리먼트는 생겼어도 리액트가 실제 값을 채우는 데 약간
     // 시간이 걸릴 수 있어서, 값이 채워질 때까지만 짧게 기다림 (최대 800ms)
     await waitFor(() => textareas.some(t => t.value.length > 0) ? true : null, 800, 80);
-    await new Promise(r => setTimeout(r, 120));
+    await new Promise(r => setTimeout(r, 50));
 
     // 수정창(textarea) 원본에는 마크다운 특수문자 앞에 백슬래시 이스케이프(\#, \*, \_ 등)가
     // 붙어있어서 화면에 보이는 텍스트랑 글자가 달라짐 -> 이스케이프를 제거한 뒤 비교/치환
@@ -452,7 +440,7 @@
       if (reallyChanged) {
         setNativeValue(ta, replacedText);
         anyChanged = true;
-        await new Promise(r => setTimeout(r, 150));
+        await new Promise(r => setTimeout(r, 60));
       }
     }
 
@@ -468,7 +456,7 @@
       return;
     }
 
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 100));
 
     const saveBtn = await waitFor(() => {
       const b = findSaveButton();
@@ -516,7 +504,7 @@
     debounceTimer = setTimeout(() => {
       debounceTimer = null;
       checkLastMessage().catch(e => { console.error('[zeta-auto-edit]', e); busy = false; });
-    }, 700);
+    }, 400);
   }
 
   let mo = null;
