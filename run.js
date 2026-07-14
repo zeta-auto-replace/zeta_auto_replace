@@ -1,3 +1,4 @@
+
 (function () {
  try {
   const WK = 'zeta_filter_words';
@@ -435,7 +436,7 @@
       //    원래 없었는데 새로 생긴 textarea들을 찾음 (하단 채팅 입력창은 원래부터 있었으므로 제외됨)
       const globalNew = Array.from(document.querySelectorAll('textarea')).filter(t => t.offsetParent !== null && !beforeTextareas.has(t));
       return globalNew.length > 0 ? globalNew : null;
-    }, 3000);
+    }, 3000, 30);
 
     if (!textareas) {
       setStatus('수정창을 찾지 못했어요. (UI가 바뀌었을 수 있어요)');
@@ -445,8 +446,8 @@
 
     // textarea 엘리먼트는 생겼어도 리액트가 실제 값을 채우는 데 약간
     // 시간이 걸릴 수 있어서, 값이 채워질 때까지만 짧게 기다림 (최대 800ms)
-    await waitFor(() => textareas.some(t => t.value.length > 0) ? true : null, 800, 80);
-    await new Promise(r => setTimeout(r, 50));
+    await waitFor(() => textareas.some(t => t.value.length > 0) ? true : null, 500, 40);
+    await new Promise(r => setTimeout(r, 15));
 
     // 수정창(textarea) 원본에는 마크다운 특수문자 앞에 백슬래시 이스케이프(\#, \*, \_ 등)가
     // 붙어있어서 화면에 보이는 텍스트랑 글자가 달라짐 -> 이스케이프를 제거한 뒤 비교/치환
@@ -457,7 +458,7 @@
       if (reallyChanged) {
         setNativeValue(ta, replacedText);
         anyChanged = true;
-        await new Promise(r => setTimeout(r, 60));
+        await new Promise(r => setTimeout(r, 25));
       }
     }
 
@@ -473,7 +474,7 @@
       return;
     }
 
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 40));
 
     const saveBtn = await waitFor(() => {
       const b = findSaveButton();
@@ -521,7 +522,7 @@
     debounceTimer = setTimeout(() => {
       debounceTimer = null;
       checkLastMessage().catch(e => { console.error('[zeta-auto-edit]', e); busy = false; });
-    }, 400);
+    }, 200);
   }
 
   let mo = null;
@@ -541,7 +542,7 @@
     // 일정 시간마다 무조건 한 번씩은 강제로 검사한다.
     fallbackInterval = setInterval(() => {
       checkLastMessage().catch(e => { console.error('[zeta-auto-edit]', e); busy = false; });
-    }, 500);
+    }, 250);
 
     setStatus('자동감시 시작됨(최근 메세지만). 단어 ' + words.length + '개 등록됨.');
   }
