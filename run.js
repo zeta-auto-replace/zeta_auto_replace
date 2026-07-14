@@ -283,14 +283,15 @@
   // ---------- 최근 메세지 컨테이너 찾기 ----------
   function findMessageContainer(editBtn) {
     let node = editBtn.parentElement;
-    let best = node;
-    for (let i = 0; i < 15 && node && node !== document.body; i++) {
-      const cnt = node.querySelectorAll('[data-testid="edit-button"]').length;
-      if (cnt > 1) break;
-      best = node;
+    for (let i = 0; i < 25 && node && node !== document.body; i++) {
+      const text = (node.innerText || '').trim();
+      // 이 사이트는 수정 버튼을 화면에 딱 1개만 렌더링해서 "버튼 2개 이상"
+      // 조건으로는 절대 못 멈추므로, 대신 "메시지 하나 분량의 텍스트가
+      // 모였다" 시점에서 멈춘다.
+      if (text.length > 20) return node;
       node = node.parentElement;
     }
-    return best;
+    return node || editBtn.parentElement;
   }
 
   function getLastMessageContainer() {
