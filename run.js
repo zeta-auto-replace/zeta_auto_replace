@@ -1,3 +1,15 @@
+// ==UserScript==
+// @name         Zeta 자동 금지어 수정-저장 필터
+// @namespace    zeta-auto-filter
+// @version      1.4
+// @description  제타 채팅에서 가장 최근 메시지만 감시해서 금지어를 자동으로 수정-저장합니다.
+// @match        https://zeta-ai.io/*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=zeta-ai.io
+// @grant        none
+// @run-at       document-idle
+// ==/UserScript==
+
+
 (function () {
   const WK = 'zeta_filter_words';
 
