@@ -282,18 +282,34 @@
 
   // ---------- 최근 메세지 컨테이너 찾기 ----------
   function findMessageContainer(editBtn) {
-    // 수정 버튼에서 위로 올라가면서 각 단계의 텍스트 길이를 추적하다가,
-    // "갑자기 확 늘어나는 지점" 바로 직전에서 멈춘다.
-    // (그 지점부터는 스크롤 영역 전체라 다른 메시지들까지 섞이기 시작하는 지점이기 때문)
+    // 메시지 길이가 짧을 때(20자)도, 길 때(800자+)도 안정적으로 맞도록
+    // 글자 수 대신 구조(class)를 기준으로 찾는다.
+    // 채팅 목록을 스크롤하는 최상위 영역은 보통 'overflow-y-auto'가 붙어있으므로,
+    // 그 영역을 만나면 "바로 그 아래 자식"이 메시지 하나의 경계다.
     let node = editBtn.parentElement;
     let prevNode = node;
-    let prevLen = (node.innerText || '').trim().length;
-    node = node.parentElement;
     let i = 0;
     while (node && node !== document.body && i < 25) {
+      const cls = (typeof node.className === 'string') ? node.className : '';
+      if (/overflow-y-auto/.test(cls)) {
+        return prevNode;
+      }
+      prevNode = node;
+      node = node.parentElement;
+      i++;
+    }
+
+    // 혹시 overflow-y-auto를 못 만났으면(구조가 또 바뀐 경우) 예전 방식(텍스트 길이
+    // 점프 감지)으로 대체 시도
+    node = editBtn.parentElement;
+    prevNode = node;
+    let prevLen = (node.innerText || '').trim().length;
+    node = node.parentElement;
+    i = 0;
+    while (node && node !== document.body && i < 25) {
       const len = (node.innerText || '').trim().length;
-      if (prevLen > 50 && len > prevLen * 1.3 + 20) {
-        return prevNode; // 여기서부터 다른 메시지가 섞이기 시작함 -> 그 직전 단계가 이 메시지의 경계
+      if (prevLen > 10 && len > prevLen * 1.5 + 30) {
+        return prevNode;
       }
       prevNode = node;
       prevLen = len;
