@@ -242,6 +242,24 @@
     el.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
   }
 
+  // 사이트가 커스텀 Button 컴포넌트를 써서 순수 click 이벤트만으로는
+  // 안 눌리는 경우가 있어, 실제 클릭처럼 이벤트를 순서대로 여러 개 발생시킴
+  function robustClick(el) {
+    if (!el) return;
+    el.scrollIntoView({ block: 'center', behavior: 'auto' });
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const base = { bubbles: true, cancelable: true, composed: true, view: window, clientX: cx, clientY: cy };
+    try { el.dispatchEvent(new PointerEvent('pointerdown', { ...base, pointerId: 1, isPrimary: true })); } catch (e) {}
+    el.dispatchEvent(new MouseEvent('mousedown', base));
+    try { el.dispatchEvent(new PointerEvent('pointerup', { ...base, pointerId: 1, isPrimary: true })); } catch (e) {}
+    el.dispatchEvent(new MouseEvent('mouseup', base));
+    el.dispatchEvent(new MouseEvent('click', base));
+    // 혹시 위 이벤트들도 안 먹히는 컴포넌트를 위한 최후 수단
+    if (typeof el.click === 'function') el.click();
+  }
+
   function waitFor(fn, timeout = 3000, interval = 100) {
     return new Promise((resolve) => {
       const start = Date.now();
@@ -341,7 +359,7 @@
 
     const beforeButtons = snapshotVisibleButtons();
 
-    editBtn.click();
+    robustClick(editBtn);
 
     const textarea = await waitFor(() => {
       const areas = document.querySelectorAll('textarea');
@@ -361,7 +379,7 @@
     if (!reallyChanged) {
       const saveBtnNow = findSaveButton();
       const cancelBtn = findCancelButtonNear(saveBtnNow);
-      if (cancelBtn) cancelBtn.click();
+      if (cancelBtn) robustClick(cancelBtn);
       lastProcessed.set(container, snapshotText);
       setStatus('금지어 없음. 감시 계속 중.');
       busy = false;
@@ -382,7 +400,7 @@
       return;
     }
 
-    saveBtn.click();
+    robustClick(saveBtn);
     setStatus('메세지 자동 수정 완료 ✅');
     lastProcessed.set(container, replacedText);
     busy = false;
