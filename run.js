@@ -282,6 +282,16 @@
 
   // ---------- 최근 메세지 컨테이너 찾기 ----------
   function findMessageContainer(editBtn) {
+    // 1순위: id="message-MESSAGE-..." 형태의 안정적인 식별자를 가진 조상을 최우선으로 사용
+    // (클래스명이나 글자 수보다 훨씬 안 바뀔 가능성이 높음)
+    let idNode = editBtn.parentElement;
+    let hops = 0;
+    while (idNode && idNode !== document.body && hops < 25) {
+      if (idNode.id && /^message-MESSAGE-/.test(idNode.id)) return idNode;
+      idNode = idNode.parentElement;
+      hops++;
+    }
+
     // 메시지 길이가 짧을 때(20자)도, 길 때(800자+)도 안정적으로 맞도록
     // 글자 수 대신 구조(class)를 기준으로 찾는다.
     // 채팅 목록을 스크롤하는 최상위 영역은 보통 'overflow-y-auto'가 붙어있으므로,
