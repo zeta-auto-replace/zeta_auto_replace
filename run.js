@@ -541,7 +541,7 @@
     // 일정 시간마다 무조건 한 번씩은 강제로 검사한다.
     fallbackInterval = setInterval(() => {
       checkLastMessage().catch(e => { console.error('[zeta-auto-edit]', e); busy = false; });
-    }, 1500);
+    }, 500);
 
     setStatus('자동감시 시작됨(최근 메세지만). 단어 ' + words.length + '개 등록됨.');
   }
