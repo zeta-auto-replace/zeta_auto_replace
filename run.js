@@ -1,3 +1,14 @@
+// ==UserScript==
+// @name         Zeta 자동 금지어 수정-저장 필터
+// @namespace    zeta-auto-filter
+// @version      1.1
+// @description  제타 채팅에서 가장 최근 메시지만 감시해서 금지어를 자동으로 수정-저장합니다.
+// @match        https://zeta-ai.io/*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=zeta-ai.io
+// @grant        none
+// @run-at       document-idle
+// ==/UserScript==
+
 (function () {
   const WK = 'zeta_filter_words';
 
@@ -10,11 +21,9 @@
 
   const host = document.createElement('div');
   host.id = 'zeta-filter-host';
-  // host 자체는 body에 붙는 "그릇"일 뿐. all:initial로 바깥 스타일 상속 차단.
   host.style.cssText = 'all:initial;position:fixed;top:0;left:0;width:0;height:0;z-index:2147483647;';
   document.body.appendChild(host);
 
-  // closed로 만들면 바깥 스크립트가 shadowRoot에 아예 접근 못 함 (더 안전)
   const shadow = host.attachShadow({ mode: 'closed' });
 
   const overlay = document.createElement('div');
@@ -63,7 +72,7 @@
       ※ <b>가장 최근 메세지 1개만</b> 감시합니다. 새 메세지가 오면 금지어 포함 여부를 검사해서, 있으면 자동으로 <b>수정 버튼 → 텍스트 교체 → 저장 버튼</b>까지 눌러 원본 자체를 바꿉니다.<br>
       ※ 화면에 보이는 게 아니라 서버에 저장된 원본이 바뀌므로 새로고침해도 유지됩니다.<br>
       ※ 조사(은/는, 이/가, 을/를, 과/와, 로/으로, 이나/나, 이랑/랑, 이라도/라도, 이라서/라서)는 대체어의 받침 유무를 보고 자동 보정을 시도합니다(완벽하지 않을 수 있어요).<br>
-      ※ 다만 UI 구조가 바뀌면 동작이 깨질 수 있어요.<br>
+      ※ 저장 버튼은 클래스명이 아니라 체크마크 아이콘 모양으로 찾기 때문에 색상/클래스가 바뀌어도 잘 안 깨집니다.<br>
       ※ 이 패널은 Shadow DOM으로 격리되어 있어 다른 북마클릿의 스타일에 영향받지 않습니다.
     </p>
   `);
@@ -157,8 +166,6 @@
     return null;
   }
 
-  // 매치 위치의 앞/뒤가 "공백이거나 문자열의 시작/끝"인지 확인.
-  // 즉 그 단어가 다른 단어의 일부가 아니라 독립적으로 쓰였는지 판별.
   function isWhitespaceBoundary(ch) {
     return ch === undefined || /\s/.test(ch);
   }
@@ -180,7 +187,6 @@
         const beforeCh = found > 0 ? text[found - 1] : undefined;
         const afterCh = text[found + banned.length];
         if (!(isWhitespaceBoundary(beforeCh) && isWhitespaceBoundary(afterCh))) {
-          // 독립된 단어가 아님 (앞이나 뒤에 다른 글자가 붙어있음) -> 건너뛰고 계속 찾기
           result += text.slice(idx, found + 1);
           idx = found + 1;
           continue;
@@ -196,7 +202,6 @@
         continue;
       }
 
-      // 대체어가 여러 개면 매 등장마다 랜덤으로 하나 선택
       const replacement = pickRandom(replacementList);
       result += replacement;
       const lastCh = replacement[replacement.length - 1];
@@ -251,9 +256,7 @@
     });
   }
 
-  // ---------- 최근 메세지 "텍스트 미리보기용" 컨테이너 찾기 (페이지 본문 DOM 기준, document 사용) ----------
-  // 수정 버튼을 기준으로 부모를 한 칸씩 올라가면서, 그 안에 수정버튼이 "정확히 1개"만
-  // 있을 때까지만 올라감. 2개 이상이 잡히는 순간 = 다른 메세지까지 포함된 것이므로 멈춤.
+  // ---------- 최근 메세지 컨테이너 찾기 ----------
   function findMessageContainer(editBtn) {
     let node = editBtn.parentElement;
     let best = node;
@@ -273,23 +276,47 @@
     return { container: findMessageContainer(lastBtn), editBtn: lastBtn };
   }
 
-  // ---------- 실제 수정창의 textarea / 저장버튼 / 닫기버튼 찾기 (페이지 본문 DOM, document 사용) ----------
-  // "수정 버튼 누르기 전" 상태를 스냅샷으로 찍어두고, 누른 뒤에
-  // "이전엔 없었거나 안 보였는데, 지금은 화면에 보이는" 요소를 문서 전체에서 찾는 방식.
-  function snapshotVisibility(selector) {
-    const map = new Map();
-    document.querySelectorAll(selector).forEach(el => {
-      map.set(el, el.offsetParent !== null);
-    });
-    return map;
+  // ---------- 저장 버튼: 클래스명이 아니라 "체크마크 아이콘 모양"으로 찾음 ----------
+  // 2026-07 기준 확인된 체크 아이콘: viewBox 0 0 16 16, stroke-width 1.3,
+  // path d="M13.507 5 6.84 11.673 3 7.833" (좌표는 약간 달라질 수 있어 패턴으로 비교)
+  function normalizeD(d) {
+    return (d || '').replace(/\s+/g, ' ').trim();
   }
 
-  function findNewlyVisible(beforeMap, selector) {
-    const els = document.querySelectorAll(selector);
-    for (const el of els) {
-      if (el.offsetParent === null) continue; // 지금 안 보이면 후보 아님
-      const wasVisible = beforeMap.get(el) === true;
-      if (!wasVisible) return el; // 새로 생겼거나, 원래 숨겨져 있었음
+  function isCheckmarkPath(pathEl) {
+    const d = normalizeD(pathEl.getAttribute('d'));
+    if (!d) return false;
+    const nums = d.match(/-?\d+(\.\d+)?/g);
+    if (!nums || nums.length !== 6) return false; // M x y  x y  x y (좌표 3쌍)
+    const [x1, y1, x2, y2, x3, y3] = nums.map(Number);
+    // 체크마크 모양: 가운데 점(x2,y2)이 양 옆 점보다 아래(y값이 큼) -> V자 형태
+    return y2 > y1 && y2 > y3;
+  }
+
+  function findSaveButton() {
+    const buttons = document.querySelectorAll('button');
+    for (const b of buttons) {
+      if (b.offsetParent === null) continue; // 화면에 안 보이면 후보 아님
+      const svg = b.querySelector('svg[viewBox="0 0 16 16"]');
+      if (!svg) continue;
+      const path = svg.querySelector('path[stroke]');
+      if (!path) continue;
+      if (isCheckmarkPath(path)) return b;
+    }
+    return null;
+  }
+
+  // ---------- 취소/닫기 버튼: 저장 버튼과 "같은 툴바"에 있는 다른 버튼으로 추정 ----------
+  function findCancelButtonNear(saveBtn) {
+    if (!saveBtn) return null;
+    // 저장 버튼을 감싸는 가장 가까운 조상 중, 버튼이 2개 이상 모여있는 지점을 찾는다
+    let el = saveBtn.parentElement;
+    for (let i = 0; i < 6 && el; i++) {
+      const btns = Array.from(el.querySelectorAll('button')).filter(b => b.offsetParent !== null);
+      if (btns.length >= 2) {
+        return btns.find(b => b !== saveBtn) || null;
+      }
+      el = el.parentElement;
     }
     return null;
   }
@@ -300,17 +327,28 @@
   let pending = false;
   let debounceTimer = null;
 
+  function snapshotVisibleButtons() {
+    const set = new Set();
+    document.querySelectorAll('button').forEach(b => {
+      if (b.offsetParent !== null) set.add(b);
+    });
+    return set;
+  }
+
   async function editOneMessage(container, editBtn, snapshotText) {
     busy = true;
     setStatus('금지어 발견, 자동 수정 중...');
 
-    const beforeTextareas = snapshotVisibility('textarea');
-    const beforeSaveBtns = snapshotVisibility('button.bg-primary-400');
-    const beforeCloseBtns = snapshotVisibility('button.bg-gray-800');
+    const beforeButtons = snapshotVisibleButtons();
 
     editBtn.click();
 
-    const textarea = await waitFor(() => findNewlyVisible(beforeTextareas, 'textarea'), 3000);
+    const textarea = await waitFor(() => {
+      const areas = document.querySelectorAll('textarea');
+      for (const t of areas) { if (t.offsetParent !== null) return t; }
+      return null;
+    }, 3000);
+
     if (!textarea) {
       setStatus('수정창을 찾지 못했어요. (UI가 바뀌었을 수 있어요)');
       busy = false;
@@ -321,9 +359,9 @@
     const { text: replacedText, changed: reallyChanged } = localReplace(original, words);
 
     if (!reallyChanged) {
-      // 실제 입력창 내용엔 금지어가 없었음 -> 그냥 닫기만 하고 종료
-      const closeBtn = await waitFor(() => findNewlyVisible(beforeCloseBtns, 'button.bg-gray-800'), 2000);
-      if (closeBtn) closeBtn.click();
+      const saveBtnNow = findSaveButton();
+      const cancelBtn = findCancelButtonNear(saveBtnNow);
+      if (cancelBtn) cancelBtn.click();
       lastProcessed.set(container, snapshotText);
       setStatus('금지어 없음. 감시 계속 중.');
       busy = false;
@@ -331,19 +369,17 @@
     }
 
     setNativeValue(textarea, replacedText);
-    // textarea 내용이 길어서 스크롤이 생겨도 저장 버튼 활성화 조건(값 변경 감지)이
-    // 걸리도록 살짝 더 기다렸다가 저장 버튼을 찾음
     await new Promise(r => setTimeout(r, 250));
 
     const saveBtn = await waitFor(() => {
-      const b = findNewlyVisible(beforeSaveBtns, 'button.bg-primary-400');
+      const b = findSaveButton();
       return (b && !b.disabled) ? b : null;
     }, 4000, 150);
 
     if (!saveBtn) {
       setStatus('저장 버튼을 찾지 못했어요(비활성 상태일 수 있음). 수동으로 저장해주세요.');
       busy = false;
-      return; // lastProcessed에 기록 안 함 -> 다음 기회에 재시도
+      return;
     }
 
     saveBtn.click();
