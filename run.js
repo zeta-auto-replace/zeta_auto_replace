@@ -1,4 +1,5 @@
 (function () {
+ try {
   const WK = 'zeta_filter_words';
 
   function lw() { try { return JSON.parse(localStorage.getItem(WK)) || []; } catch (e) { return []; } }
@@ -11,7 +12,23 @@
   const host = document.createElement('div');
   host.id = 'zeta-filter-host';
   host.style.cssText = 'all:initial;position:fixed;top:0;left:0;width:0;height:0;z-index:2147483647;';
-  document.body.appendChild(host);
+
+  // 다른 북마클릿이 <body>에 transform을 걸어두면 position:fixed가
+  // 화면 기준이 아니라 그 조상 기준으로 틀어져서 화면 밖으로 밀려날 수 있음.
+  // 이 경우 body 대신 <html>에 직접 붙여서 우회한다.
+  let hasTransformAncestor = false;
+  let __t = document.body;
+  while (__t) {
+    const cs = window.getComputedStyle(__t);
+    if (cs && cs.transform && cs.transform !== 'none') { hasTransformAncestor = true; break; }
+    __t = __t.parentElement;
+  }
+  if (hasTransformAncestor) {
+    console.warn('[zeta-auto-edit] body(또는 조상)에 transform이 걸려있어 <html>에 직접 붙입니다.');
+    document.documentElement.appendChild(host);
+  } else {
+    document.body.appendChild(host);
+  }
 
   const shadow = host.attachShadow({ mode: 'closed' });
 
@@ -508,15 +525,24 @@
   }
 
   let mo = null;
+  let fallbackInterval = null;
 
   function startWatching() {
     if (mo) mo.disconnect();
+    if (fallbackInterval) clearInterval(fallbackInterval);
     scheduleCheck();
 
     mo = new MutationObserver(() => {
       scheduleCheck();
     });
     mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+
+    // 다른 스크립트가 DOM을 계속 건드려서 디바운스가 영원히 리셋되는 경우를 대비해,
+    // 일정 시간마다 무조건 한 번씩은 강제로 검사한다.
+    fallbackInterval = setInterval(() => {
+      checkLastMessage().catch(e => { console.error('[zeta-auto-edit]', e); busy = false; });
+    }, 1500);
+
     setStatus('자동감시 시작됨(최근 메세지만). 단어 ' + words.length + '개 등록됨.');
   }
 
@@ -525,6 +551,8 @@
     mo = null;
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = null;
+    if (fallbackInterval) clearInterval(fallbackInterval);
+    fallbackInterval = null;
     setStatus('자동감시 중지됨.');
   }
 
@@ -538,4 +566,8 @@
   if (words.length > 0) {
     setStatus('저장된 단어 ' + words.length + '개 불러옴. "저장하고 자동감시 시작"을 눌러주세요.');
   }
+ } catch (e) {
+   console.error('[zeta-auto-edit] 초기화 중 오류:', e);
+   alert('제타 필터 북마클릿 오류: ' + (e && e.message ? e.message : e) + '\n(다른 북마클릿과 충돌 가능성 - 콘솔에서 자세한 내용 확인 가능)');
+ }
 })();
