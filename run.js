@@ -1,4 +1,3 @@
-
 (function () {
  try {
   const WK = 'zeta_filter_words';
@@ -14,9 +13,6 @@
   host.id = 'zeta-filter-host';
   host.style.cssText = 'all:initial;position:fixed;top:0;left:0;width:0;height:0;z-index:2147483647;';
 
-  // 다른 북마클릿이 <body>에 transform을 걸어두면 position:fixed가
-  // 화면 기준이 아니라 그 조상 기준으로 틀어져서 화면 밖으로 밀려날 수 있음.
-  // 이 경우 body 대신 <html>에 직접 붙여서 우회한다.
   let hasTransformAncestor = false;
   let __t = document.body;
   while (__t) {
@@ -25,7 +21,6 @@
     __t = __t.parentElement;
   }
   if (hasTransformAncestor) {
-    console.warn('[zeta-auto-edit] body(또는 조상)에 transform이 걸려있어 <html>에 직접 붙입니다.');
     document.documentElement.appendChild(host);
   } else {
     document.body.appendChild(host);
@@ -79,7 +74,7 @@
       ※ <b>가장 최근 메세지 1개만</b> 감시합니다. 새 메세지가 오면 금지어 포함 여부를 검사해서, 있으면 자동으로 <b>수정 버튼 → 텍스트 교체 → 저장 버튼</b>까지 눌러 원본 자체를 바꿉니다.<br>
       ※ 화면에 보이는 게 아니라 서버에 저장된 원본이 바뀌므로 새로고침해도 유지됩니다.<br>
       ※ 조사(은/는, 이/가, 을/를, 과/와, 로/으로, 이나/나, 이랑/랑, 이라도/라도, 이라서/라서)는 대체어의 받침 유무를 보고 자동 보정을 시도합니다(완벽하지 않을 수 있어요).<br>
-      ※ 저장 버튼은 클래스명이 아니라 체크마크 아이콘 모양으로 찾기 때문에 색상/클래스가 바뀌어도 잘 안 깨집니다.<br>
+      ※ 편집/저장/취소 버튼은 aria-label로 찾기 때문에 클래스명/아이콘 모양이 바뀌어도 잘 안 깨집니다. (2026-08 갱신)<br>
       ※ 이 패널은 Shadow DOM으로 격리되어 있어 다른 북마클릿의 스타일에 영향받지 않습니다.
     </p>
   `);
@@ -249,8 +244,6 @@
     el.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
   }
 
-  // 사이트가 커스텀 Button 컴포넌트를 써서 순수 click 이벤트만으로는
-  // 안 눌리는 경우가 있어, 실제 클릭처럼 이벤트를 순서대로 여러 개 발생시킴
   function robustClick(el) {
     if (!el) return;
     el.scrollIntoView({ block: 'center', behavior: 'auto' });
@@ -259,7 +252,6 @@
     const cy = rect.top + rect.height / 2;
     const base = { bubbles: true, cancelable: true, composed: true, view: window, clientX: cx, clientY: cy };
 
-    // 모바일(터치) 대응: touchstart/touchend도 함께 발생시킴
     try {
       if (window.Touch && window.TouchEvent) {
         const touch = new Touch({ identifier: Date.now(), target: el, clientX: cx, clientY: cy });
@@ -273,13 +265,9 @@
     try { el.dispatchEvent(new PointerEvent('pointerup', { ...base, pointerId: 1, isPrimary: true })); } catch (e) {}
     el.dispatchEvent(new MouseEvent('mouseup', base));
     el.dispatchEvent(new MouseEvent('click', base));
-    // 혹시 위 이벤트들도 안 먹히는 컴포넌트를 위한 최후 수단
     if (typeof el.click === 'function') el.click();
   }
 
-  // 마크다운 이스케이프 제거: 수정창 원본 텍스트는 #, *, _ 등 특수문자 앞에
-  // 백슬래시가 붙어있어 화면에 보이는 텍스트와 글자가 어긋남. 이를 제거해서
-  // 감지할 때 봤던 텍스트와 최대한 같은 형태로 맞춰준다.
   function stripMarkdownEscapes(text) {
     return (text || '').replace(/\\([\\`*_{}\[\]()#+.!>~|-])/g, '$1');
   }
@@ -300,8 +288,6 @@
 
   // ---------- 최근 메세지 컨테이너 찾기 ----------
   function findMessageContainer(editBtn) {
-    // 1순위: id="message-MESSAGE-..." 형태의 안정적인 식별자를 가진 조상을 최우선으로 사용
-    // (클래스명이나 글자 수보다 훨씬 안 바뀔 가능성이 높음)
     let idNode = editBtn.parentElement;
     let hops = 0;
     while (idNode && idNode !== document.body && hops < 25) {
@@ -310,10 +296,6 @@
       hops++;
     }
 
-    // 메시지 길이가 짧을 때(20자)도, 길 때(800자+)도 안정적으로 맞도록
-    // 글자 수 대신 구조(class)를 기준으로 찾는다.
-    // 채팅 목록을 스크롤하는 최상위 영역은 보통 'overflow-y-auto'가 붙어있으므로,
-    // 그 영역을 만나면 "바로 그 아래 자식"이 메시지 하나의 경계다.
     let node = editBtn.parentElement;
     let prevNode = node;
     let i = 0;
@@ -327,8 +309,6 @@
       i++;
     }
 
-    // 혹시 overflow-y-auto를 못 만났으면(구조가 또 바뀐 경우) 예전 방식(텍스트 길이
-    // 점프 감지)으로 대체 시도
     node = editBtn.parentElement;
     prevNode = node;
     let prevLen = (node.innerText || '').trim().length;
@@ -347,16 +327,15 @@
     return prevNode;
   }
 
+  // ★★★ 변경점 1: data-testid="edit-button" → aria-label="Edit message" ★★★
   function getLastMessageContainer() {
-    const editButtons = document.querySelectorAll('[data-testid="edit-button"]');
+    const editButtons = document.querySelectorAll('button[aria-label="Edit message"]');
     if (editButtons.length === 0) return null;
     const lastBtn = editButtons[editButtons.length - 1];
     return { container: findMessageContainer(lastBtn), editBtn: lastBtn };
   }
 
-  // ---------- 저장 버튼: 클래스명이 아니라 "체크마크 아이콘 모양"으로 찾음 ----------
-  // 2026-07 기준 확인된 체크 아이콘: viewBox 0 0 16 16, stroke-width 1.3,
-  // path d="M13.507 5 6.84 11.673 3 7.833" (좌표는 약간 달라질 수 있어 패턴으로 비교)
+  // ---------- 저장 버튼 ----------
   function normalizeD(d) {
     return (d || '').replace(/\s+/g, ' ').trim();
   }
@@ -365,16 +344,19 @@
     const d = normalizeD(pathEl.getAttribute('d'));
     if (!d) return false;
     const nums = d.match(/-?\d+(\.\d+)?/g);
-    if (!nums || nums.length !== 6) return false; // M x y  x y  x y (좌표 3쌍)
+    if (!nums || nums.length !== 6) return false;
     const [x1, y1, x2, y2, x3, y3] = nums.map(Number);
-    // 체크마크 모양: 가운데 점(x2,y2)이 양 옆 점보다 아래(y값이 큼) -> V자 형태
     return y2 > y1 && y2 > y3;
   }
 
+  // ★★★ 변경점 2: aria-label="Save edit"을 1순위로, 기존 체크마크 모양 탐지는 폴백으로 유지 ★★★
   function findSaveButton() {
+    const byAria = document.querySelector('button[aria-label="Save edit"]');
+    if (byAria && byAria.offsetParent !== null) return byAria;
+
     const buttons = document.querySelectorAll('button');
     for (const b of buttons) {
-      if (b.offsetParent === null) continue; // 화면에 안 보이면 후보 아님
+      if (b.offsetParent === null) continue;
       const svg = b.querySelector('svg[viewBox="0 0 16 16"]');
       if (!svg) continue;
       const path = svg.querySelector('path[stroke]');
@@ -384,10 +366,12 @@
     return null;
   }
 
-  // ---------- 취소/닫기 버튼: 저장 버튼과 "같은 툴바"에 있는 다른 버튼으로 추정 ----------
+  // ★★★ 변경점 3: aria-label="Cancel editing"을 1순위로, 기존 추정 로직은 폴백으로 유지 ★★★
   function findCancelButtonNear(saveBtn) {
+    const byAria = document.querySelector('button[aria-label="Cancel editing"]');
+    if (byAria && byAria.offsetParent !== null) return byAria;
+
     if (!saveBtn) return null;
-    // 저장 버튼을 감싸는 가장 가까운 조상 중, 버튼이 2개 이상 모여있는 지점을 찾는다
     let el = saveBtn.parentElement;
     for (let i = 0; i < 6 && el; i++) {
       const btns = Array.from(el.querySelectorAll('button')).filter(b => b.offsetParent !== null);
@@ -399,26 +383,15 @@
     return null;
   }
 
-  // ---------- 감지 & 처리 (가장 최근 메세지 1개만) ----------
   const lastProcessed = new WeakMap();
   let busy = false;
   let pending = false;
   let debounceTimer = null;
 
-  function snapshotVisibleButtons() {
-    const set = new Set();
-    document.querySelectorAll('button').forEach(b => {
-      if (b.offsetParent !== null) set.add(b);
-    });
-    return set;
-  }
-
   async function editOneMessage(container, editBtn, snapshotText) {
     busy = true;
     setStatus('금지어 발견, 자동 수정 중...');
 
-    // 원래 화면에 이미 떠있던 textarea들(예: 하단 채팅 입력창)을 미리 기록해둠 ->
-    // 나중에 "새로 나타난" textarea만 골라서 잘못된 입력창을 건드리지 않게 함
     const beforeTextareas = new Set();
     document.querySelectorAll('textarea').forEach(t => {
       if (t.offsetParent !== null) beforeTextareas.add(t);
@@ -426,14 +399,9 @@
 
     robustClick(editBtn);
 
-    // 정보상자(infobox)처럼 본문과 별도의 textarea가 있는 경우도 있어서,
-    // 컨테이너 안의 textarea를 "전부" 찾아서 각각 검사한다.
     const textareas = await waitFor(() => {
-      // 1) 가장 정확한 방법: 메시지 컨테이너 "안에서" 찾기
       const inContainer = Array.from(container.querySelectorAll('textarea')).filter(t => t.offsetParent !== null);
       if (inContainer.length > 0) return inContainer;
-      // 2) 혹시 수정창이 컨테이너 밖(포탈 등)에 렌더링되는 경우 대비:
-      //    원래 없었는데 새로 생긴 textarea들을 찾음 (하단 채팅 입력창은 원래부터 있었으므로 제외됨)
       const globalNew = Array.from(document.querySelectorAll('textarea')).filter(t => t.offsetParent !== null && !beforeTextareas.has(t));
       return globalNew.length > 0 ? globalNew : null;
     }, 3000, 30);
@@ -444,13 +412,9 @@
       return;
     }
 
-    // textarea 엘리먼트는 생겼어도 리액트가 실제 값을 채우는 데 약간
-    // 시간이 걸릴 수 있어서, 값이 채워질 때까지만 짧게 기다림 (최대 800ms)
     await waitFor(() => textareas.some(t => t.value.length > 0) ? true : null, 500, 40);
     await new Promise(r => setTimeout(r, 15));
 
-    // 수정창(textarea) 원본에는 마크다운 특수문자 앞에 백슬래시 이스케이프(\#, \*, \_ 등)가
-    // 붙어있어서 화면에 보이는 텍스트랑 글자가 달라짐 -> 이스케이프를 제거한 뒤 비교/치환
     let anyChanged = false;
     for (const ta of textareas) {
       const original = stripMarkdownEscapes(ta.value);
@@ -489,7 +453,7 @@
 
     robustClick(saveBtn);
     setStatus('메세지 자동 수정 완료 ✅');
-    lastProcessed.delete(container); // 저장 후 다음 검사 때 최신 화면 텍스트 기준으로 새로 비교
+    lastProcessed.delete(container);
     busy = false;
   }
 
@@ -538,8 +502,6 @@
     });
     mo.observe(document.body, { childList: true, subtree: true, characterData: true });
 
-    // 다른 스크립트가 DOM을 계속 건드려서 디바운스가 영원히 리셋되는 경우를 대비해,
-    // 일정 시간마다 무조건 한 번씩은 강제로 검사한다.
     fallbackInterval = setInterval(() => {
       checkLastMessage().catch(e => { console.error('[zeta-auto-edit]', e); busy = false; });
     }, 250);
