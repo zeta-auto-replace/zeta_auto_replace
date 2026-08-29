@@ -135,13 +135,13 @@
     return batchimCode(ch) === 8;
   }
 
+  // ★★★ 수정: '이'/'가'는 아래에서 별도 처리하므로 목록에서 제외 ★★★
   const PARTICLE_RULES = [
     ['이라도', '라도'],
     ['이라서', '라서'],
     ['이랑', '랑'],
     ['이나', '나'],
     ['은', '는'],
-    ['이', '가'],
     ['을', '를'],
     ['과', '와'],
     ['아', '야'],
@@ -155,6 +155,26 @@
       if (hasB && !isRieul) return { len: 1, text: '으로' };
       return null;
     }
+
+    // ★★★ 수정: '이' 뒤에 곧바로 한글 글자가 이어지면(네/다/고/야 등 어미) 서술격조사 '이다' 계열로 보고
+    // 받침 없을 때 '이'를 생략(이네→네), 받침 있으면 그대로 유지.
+    // 뒤에 공백/문장부호/끝이 오면 주격조사 '이/가'로 보고 기존처럼 처리.
+    if (fullText.startsWith('이', pos)) {
+      const nextCh = fullText[pos + 1];
+      const isCopula = nextCh && /[가-힣]/.test(nextCh);
+      if (isCopula) {
+        return hasB ? null : { len: 1, text: '' };
+      }
+      return hasB ? null : { len: 1, text: '가' };
+    }
+    if (fullText.startsWith('가', pos)) {
+      // '가' 뒤에 곧바로 다른 글자가 이어지면(가다/가고 등 동사일 가능성) 건드리지 않음
+      const nextCh = fullText[pos + 1];
+      const looksLikeVerb = nextCh && /[가-힣]/.test(nextCh);
+      if (looksLikeVerb) return null;
+      return hasB ? { len: 1, text: '이' } : null;
+    }
+
     for (const [withB, noB] of PARTICLE_RULES) {
       if (fullText.startsWith(withB, pos)) {
         if (!hasB) return { len: withB.length, text: noB };
@@ -327,7 +347,6 @@
     return prevNode;
   }
 
-  // ★★★ 변경점 1: data-testid="edit-button" → aria-label="Edit message" ★★★
   function getLastMessageContainer() {
     const editButtons = document.querySelectorAll('button[aria-label="Edit message"]');
     if (editButtons.length === 0) return null;
@@ -349,7 +368,6 @@
     return y2 > y1 && y2 > y3;
   }
 
-  // ★★★ 변경점 2: aria-label="Save edit"을 1순위로, 기존 체크마크 모양 탐지는 폴백으로 유지 ★★★
   function findSaveButton() {
     const byAria = document.querySelector('button[aria-label="Save edit"]');
     if (byAria && byAria.offsetParent !== null) return byAria;
@@ -366,7 +384,6 @@
     return null;
   }
 
-  // ★★★ 변경점 3: aria-label="Cancel editing"을 1순위로, 기존 추정 로직은 폴백으로 유지 ★★★
   function findCancelButtonNear(saveBtn) {
     const byAria = document.querySelector('button[aria-label="Cancel editing"]');
     if (byAria && byAria.offsetParent !== null) return byAria;
